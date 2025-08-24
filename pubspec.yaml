@@ -1,0 +1,51 @@
+name: integrated_martial_arts_trainer
+description: A complete offline martial arts training app with exercises, diet plans, and a smart coach.
+publish_to: 'none' 
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.3 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # UI & Utilities
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.1.0
+  percent_indicator: ^4.2.3 # For progress bars
+  fl_chart: ^0.64.0        # For progress graphs
+  
+  # Other packages from before...
+  sqflite: ^2.3.0
+  path_provider: ^2.1.1
+  flutter_riverpod: ^2.4.9
+  flutter_tts: ^3.8.3
+  just_audio: ^0.9.36
+  #... etc.
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/data/exercises.json
+    - assets/images/
+    - assets/images/karate/
+    #... all other asset folders
+    - assets/sounds/
+    - assets/fonts/
+
+  fonts:
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/Cairo-Regular.ttf
+        - asset: assets/fonts/Cairo-Bold.ttf
+          weight: 700
