@@ -1,0 +1,49 @@
+name: Build Flutter App
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # الخطوة 1: تحميل الكود من المستودع
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # الخطوة 2: تثبيت JDK 17 (مهم لحل مشكلة Gradle)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # الخطوة 3: تثبيت Flutter
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      # الخطوة 4: التحقق من إصدار Flutter
+      - name: Check Flutter version
+        run: flutter --version
+
+      # الخطوة 5: تثبيت dependencies
+      - name: Get packages
+        run: flutter pub get
+
+      # الخطوة 6: بناء التطبيق (مع حل مشكلة Gradle)
+      - name: Build Android App Bundle
+        run: |
+          flutter clean
+          flutter pub get
+          flutter build appbundle --release
+
+      # الخطوة 7: رفع الملف الناتج
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-bundle
+          path: build/app/outputs/bundle/release/app-release.aab
