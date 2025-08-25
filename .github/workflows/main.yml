@@ -10,8 +10,7 @@ jobs:
 
     steps:
       # الخطوة 1: تحميل الكود من المستودع
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       # الخطوة 2: تثبيت JDK 17
       - name: Set up JDK 17
@@ -20,50 +19,32 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # الخطوة 3: تثبيت Flutter بإصدار متوافق
-      - name: Install Flutter
-        uses: subosito/flutter-action@v2
+      # الخطوة 3: تثبيت Flutter
+      - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.22.2'  # إصدار مستقر ومتوافق
 
-      # الخطوة 4: التحقق من إصدار Flutter
-      - name: Check Flutter version
-        run: flutter --version
-
-      # الخطوة 5: تحديث إعدادات Gradle
-      - name: Update Gradle configuration
+      # الخطوة 4: إنشاء ملفات Android إذا كانت مفقودة
+      - name: Generate Android files if missing
         run: |
-          # تحديث إصدار Android Gradle Plugin
-          sed -i 's/com.android.tools.build:gradle:.*/com.android.tools.build:gradle:8.1.2/' android/build.gradle
-          
-          # تحديث إصدار Kotlin
-          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = '\''1.9.22'\''/' android/build.gradle
-          
-          # تحديث إصدار Gradle
-          echo "distributionBase=GRADLE_USER_HOME" > android/gradle/wrapper/gradle-wrapper.properties
-          echo "distributionPath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties
-          echo "distributionUrl=https\\\\://services.gradle.org/distributions/gradle-8.4-all.zip" >> android/gradle/wrapper/gradle-wrapper.properties
-          echo "zipStoreBase=GRADLE_USER_HOME" >> android/gradle/wrapper/gradle-wrapper.properties
-          echo "zipStorePath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties
+          if [ ! -f "android/gradlew" ]; then
+            echo "إنشاء ملفات Android المفقودة..."
+            flutter create --platforms=android --org com.example .
+          fi
 
-      # الخطوة 6: منح صلاحيات تنفيذ لملف gradlew
+      # الخطوة 5: منح صلاحيات التنفيذ لملف gradlew
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      # الخطوة 7: تثبيت dependencies
+      # الخطوة 6: تثبيت dependencies
       - name: Get packages
         run: flutter pub get
 
-      # الخطوة 8: تحديث الإضافات القديمة
-      - name: Upgrade outdated packages
-        run: flutter pub upgrade --major-versions
-
-      # الخطوة 9: بناء حزمة التطبيق
+      # الخطوة 7: بناء حزمة التطبيق
       - name: Build Android App Bundle
         run: flutter build appbundle
 
-      # الخطوة 10: رفع الملف الناتج
+      # الخطوة 8: رفع الملف الناتج
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
