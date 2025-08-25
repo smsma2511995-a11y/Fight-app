@@ -27,16 +27,18 @@ jobs:
           channel: 'stable'
           flutter-version: '3.22.2'
 
-      # الخطوة 4: إنشاء ملفات Android مع اسم صالح
-      - name: Generate Android files
+      # الخطوة 4: إنشاء هيكل Android فقط (بدون إنشاء مشروع جديد)
+      - name: Generate Android structure
         run: |
-          # استخدام اسم صالح لإنشاء المشروع
-          flutter create --platforms=android --org com.example fight_app .
-          
-          # نسخ الملفات المهمة من المجلد المؤقت إذا لزم الأمر
-          if [ -d "fight_app" ]; then
-            cp -r fight_app/android .
-            rm -rf fight_app
+          # إنشاء هيكل Android فقط إذا كان مجلد android غير موجود
+          if [ ! -d "android" ]; then
+            echo "إنشاء هيكل Android..."
+            flutter create --platforms=android --org com.example --no-overwrite .
+          elif [ ! -f "android/gradlew" ]; then
+            echo "إصلاح هيكل Android الموجود..."
+            cd android
+            ./gradlew clean
+            cd ..
           fi
 
       # الخطوة 5: منح صلاحيات تنفيذ لملف gradlew
