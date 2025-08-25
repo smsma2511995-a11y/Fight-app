@@ -1,0 +1,40 @@
+```yaml
+# اسم سير العمل (سيظهر في تبويب Actions)
+name: Build Flutter App
+
+# متى يتم تشغيل هذا السير؟
+# هنا، سيتم تشغيله عند أي عملية "push" للفرع "main"
+on:
+  push:
+    branches: [ "main" ]
+
+# المهام التي سيتم تنفيذها
+jobs:
+  build:
+    # نوع الجهاز الافتراضي الذي سيتم البناء عليه
+    runs-on: ubuntu-latest
+
+    steps:
+      # الخطوة 1: جلب الأكواد الخاصة بك من المستودع
+      - uses: actions/checkout@v3
+
+      # الخطوة 2: تثبيت Flutter SDK
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      # الخطوة 3: الحصول على الحزم (flutter pub get)
+      - name: Get packages
+        run: flutter pub get
+
+      # الخطوة 4: بناء نسخة الأندرويد (App Bundle)
+      - name: Build Android App Bundle
+        run: flutter build appbundle
+
+      # الخطوة 5: رفع الملف الناتج ليكون جاهزًا للتحميل
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-bundle
+          path: build/app/outputs/bundle/release/app-release.aab
+```
