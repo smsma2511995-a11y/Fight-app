@@ -10,7 +10,8 @@ jobs:
 
     steps:
       # الخطوة 1: تحميل الكود من المستودع
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       # الخطوة 2: تثبيت JDK 17
       - name: Set up JDK 17
@@ -19,10 +20,12 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # الخطوة 3: تثبيت Flutter
-      - uses: subosito/flutter-action@v2
+      # الخطوة 3: تثبيت Flutter بإصدار متوافق
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          flutter-version: '3.22.2'  # إصدار مستقر ومتوافق
 
       # الخطوة 4: إنشاء ملفات Android إذا كانت مفقودة
       - name: Generate Android files if missing
@@ -32,19 +35,48 @@ jobs:
             flutter create --platforms=android --org com.example .
           fi
 
-      # الخطوة 5: منح صلاحيات التنفيذ لملف gradlew
+      # الخطوة 5: استخدام إعدادات Gradle مبسطة (بدون Kotlin)
+      - name: Configure Gradle without Kotlin
+        run: |
+          # تحديث build.gradle الرئيسي
+          cat > android/build.gradle << 'EOL'
+          buildscript {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+              dependencies {
+                  classpath 'com.android.tools.build:gradle:8.1.2'
+              }
+          }
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          EOL
+
+          # تحديث gradle-wrapper.properties
+          echo "distributionBase=GRADLE_USER_HOME" > android/gradle/wrapper/gradle-wrapper.properties
+          echo "distributionPath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties
+          echo "distributionUrl=https\\://services.gradle.org/distributions/gradle-8.4-all.zip" >> android/gradle/wrapper/gradle-wrapper.properties
+          echo "zipStoreBase=GRADLE_USER_HOME" >> android/gradle/wrapper/gradle-wrapper.properties
+          echo "zipStorePath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties
+
+      # الخطوة 6: منح صلاحيات تنفيذ لملف gradlew
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      # الخطوة 6: تثبيت dependencies
+      # الخطوة 7: تثبيت dependencies
       - name: Get packages
         run: flutter pub get
 
-      # الخطوة 7: بناء حزمة التطبيق
+      # الخطوة 8: بناء حزمة التطبيق
       - name: Build Android App Bundle
         run: flutter build appbundle
 
-      # الخطوة 8: رفع الملف الناتج
+      # الخطوة 9: رفع الملف الناتج
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
