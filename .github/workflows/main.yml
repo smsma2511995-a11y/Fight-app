@@ -26,15 +26,16 @@ jobs:
         with:
           channel: 'stable'
 
-      # الخطوة 4: إنشاء هيكل Android إذا كان مفقوداً
-      - name: Generate Android structure
+      # الخطوة 4: إصلاح ملف gradle-wrapper.properties
+      - name: Fix gradle-wrapper.properties
         run: |
-          if [ ! -f "android/gradlew" ]; then
-            echo "Generating Android project structure..."
-            flutter create --platforms=android --org com.example .
-          else
-            echo "Android project structure already exists."
-          fi
+          cat > android/gradle/wrapper/gradle-wrapper.properties << 'EOL'
+          distributionBase=GRADLE_USER_HOME
+          distributionPath=wrapper/dists
+          distributionUrl=https\://services.gradle.org/distributions/gradle-7.5-all.zip
+          zipStoreBase=GRADLE_USER_HOME
+          zipStorePath=wrapper/dists
+          EOL
 
       # الخطوة 5: منح صلاحيات تنفيذ لملف gradlew
       - name: Make gradlew executable
@@ -44,9 +45,9 @@ jobs:
       - name: Get packages
         run: flutter pub get
 
-      # الخطوة 7: تنظيف المشروع
-      - name: Clean project
-        run: flutter clean
+      # الخطوة 7: تحديث الإضافات القديمة
+      - name: Upgrade outdated packages
+        run: flutter pub upgrade --major-versions
 
       # الخطوة 8: بناء حزمة التطبيق
       - name: Build Android App Bundle
