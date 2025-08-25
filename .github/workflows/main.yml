@@ -25,28 +25,34 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.22.0'  # تحديد إصدار مستقر من Flutter
 
-      # الخطوة 4: التحقق من إصدار Flutter
-      - name: Check Flutter version
-        run: flutter --version
+      # الخطوة 4: إنشاء هيكل Android إذا كان مفقوداً
+      - name: Generate Android structure
+        run: |
+          if [ ! -f "android/gradlew" ]; then
+            echo "Generating Android project structure..."
+            flutter create --platforms=android --org com.example .
+          else
+            echo "Android project structure already exists."
+          fi
 
-      # الخطوة 5: تثبيت dependencies
+      # الخطوة 5: منح صلاحيات تنفيذ لملف gradlew
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
+      # الخطوة 6: تثبيت dependencies
       - name: Get packages
         run: flutter pub get
 
-      # الخطوة 6: إصلاح مشكلة Android embedding
-      - name: Fix Android embedding
-        run: |
-          flutter clean
-          flutter pub cache repair
-          cd android && ./gradlew clean && cd ..
+      # الخطوة 7: تنظيف المشروع
+      - name: Clean project
+        run: flutter clean
 
-      # الخطوة 7: بناء حزمة التطبيق
+      # الخطوة 8: بناء حزمة التطبيق
       - name: Build Android App Bundle
-        run: flutter build appbundle --no-tree-shake-icons
+        run: flutter build appbundle
 
-      # الخطوة 8: رفع الملف الناتج
+      # الخطوة 9: رفع الملف الناتج
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
