@@ -1,11 +1,17 @@
-buildscript {
-    ext.kotlin_version = '1.7.10' // أو أحدث إصدار متوافق
-    repositories {
-        google()
-        mavenCentral()
+android {
+    compileSdkVersion flutter.compileSdkVersion
+
+    defaultConfig {
+        applicationId "com.example.yourapp"
+        minSdkVersion flutter.minSdkVersion
+        targetSdkVersion flutter.targetSdkVersion
+        versionCode 1
+        versionName "1.0.0"
     }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:7.4.2' // ⬅️ تأكد من أن هذا الإصدار متوافق
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+        }
     }
 }
