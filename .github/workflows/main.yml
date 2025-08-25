@@ -27,18 +27,25 @@ jobs:
           channel: 'stable'
           flutter-version: '3.22.2'
 
-      # الخطوة 4: إنشاء هيكل Android فقط (بدون إنشاء مشروع جديد)
-      - name: Generate Android structure
+      # الخطوة 4: إنشاء هيكل Android بشكل آمن
+      - name: Create Android structure safely
         run: |
-          # إنشاء هيكل Android فقط إذا كان مجلد android غير موجود
-          if [ ! -d "android" ]; then
-            echo "إنشاء هيكل Android..."
-            flutter create --platforms=android --org com.example --no-overwrite .
-          elif [ ! -f "android/gradlew" ]; then
-            echo "إصلاح هيكل Android الموجود..."
-            cd android
-            ./gradlew clean
-            cd ..
+          # إذا كان مجلد android غير موجود أو لا يحتوي على gradlew
+          if [ ! -d "android" ] || [ ! -f "android/gradlew" ]; then
+            echo "إنشاء هيكل Android جديد..."
+            
+            # إنشاء مشروع مؤقت باسم صالح
+            flutter create --platforms=android --org com.example temp_android_project
+            
+            # نسخ مجلد android بالكامل من المشروع المؤقت
+            cp -r temp_android_project/android .
+            
+            # تنظيف الملفات المؤقتة
+            rm -rf temp_android_project
+            
+            echo "تم إنشاء هيكل Android بنجاح"
+          else
+            echo "هيكل Android موجود بالفعل"
           fi
 
       # الخطوة 5: منح صلاحيات تنفيذ لملف gradlew
