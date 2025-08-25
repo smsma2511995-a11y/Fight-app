@@ -1,0 +1,20 @@
+```yaml
+# هذا هو ملف التعليمات الذي سيقرأه Codemagic
+workflows:
+  flutter-workflow: # يمكنك تغيير هذا الاسم لاحقًا
+    name: Flutter Workflow
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Get Flutter packages
+        script: | 
+          flutter pub get
+      - name: Build Android App Bundle
+        script: | 
+          flutter build appbundle --release
+      # إذا كان مشروعك يدعم iOS، يمكنك إضافة خطوات البناء هنا لاحقًا
+    artifacts:
+      - build/app/outputs/bundle/release/*.aab
+```
