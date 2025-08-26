@@ -1,3 +1,4 @@
+
 name: Build Flutter App
 
 on:
@@ -9,30 +10,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # الخطوة 1: تنزيل الكود
       - uses: actions/checkout@v4
 
+      # الخطوة 2: إعداد بيئة جافا (مهم جدا للأندرويد الحديث)
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
+      # الخطوة 3: تثبيت فلاتر
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.22.2'
+          # يمكنك إزالة هذا السطر ليستخدم أحدث إصدار مستقر دائماً
+          flutter-version: '3.22.2' 
 
+      # الخطوة 4 (اختيارية ولكنها جيدة): إصلاح ملفات Gradle تلقائياً
+      # هذه الخطوة مفيدة إذا كانت ملفات Gradle في مشروعك قديمة
       - name: Fix Gradle configuration
         run: |
-          # تحديث إصدار Gradle
-          echo "distributionBase=GRADLE_USER_HOME" > android/gradle/wrapper/gradle-wrapper.properties
-          echo "distributionPath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties
-          echo "distributionUrl=https\\\\://services.gradle.org/distributions/gradle-8.4-all.zip" >> android/gradle/wrapper/gradle-wrapper.properties
-          echo "zipStoreBase=GRADLE_USER_HOME" >> android/gradle/wrapper/gradle-wrapper.properties
-          echo "zipStorePath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties
-
           # إصلاح ملف build.gradle الرئيسي
+          # --- لقد أضفنا سطر ext.kotlin_version هنا في الأعلى ---
           cat > android/build.gradle << 'EOL'
 buildscript {
     ext.kotlin_version = '1.9.22'
@@ -58,17 +59,18 @@ task clean(type: Delete) {
 }
 EOL
 
+      # الخطوة 5: جعل ملف gradlew قابلاً للتنفيذ
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
+      # الخطوة 6: الحصول على الحزم
       - name: Get packages
         run: flutter pub get
 
+      # الخطوة 7: بناء التطبيق
       - name: Build Android App Bundle
         run: flutter build appbundle
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-bundle
-          path: build/app/outputs/bundle/release/app-release.aab
+# --- تم حذف السطر الخاطئ من هنا ---
+```
+
