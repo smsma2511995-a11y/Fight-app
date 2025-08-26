@@ -1,27 +1,17 @@
 android {
-    compileSdkVersion flutter.compileSdkVersion
-
-    // ⬇️ تأكد من أن هذه الأسطر موجودة وصحيحة
-    sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
-    }
-
+    compileSdkVersion 34
+    
     defaultConfig {
         applicationId "com.example.your_app"
-        minSdkVersion flutter.minSdkVersion
-        targetSdkVersion flutter.targetSdkVersion
+        minSdkVersion 21
+        targetSdkVersion 34
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
     }
-
+    
     buildTypes {
         release {
             signingConfig signingConfigs.debug
         }
     }
-
-    // ⬇️ تأكد من أن ndkVersion مُعرّف بشكل صحيح
-    ndkVersion flutter.ndkVersion // ⬅️ كان خطأ في الماضي: flutter.sdkVersion
-}apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle" // ⬅️ تأكد من وجود هذا السطر
+}
