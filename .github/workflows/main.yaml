@@ -1,5 +1,5 @@
-# اسم سير العمل: النسخة النهائية ذاتية الإصلاح
-name: Self-Healing Flutter Build
+# اسم سير العمل: النسخة النهائية والمضمونة
+name: Final Guaranteed Flutter Build
 
 on:
   push:
@@ -12,51 +12,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # الخطوة 1: تنزيل الكود الذي رفعته (فقط مجلد lib و pubspec.yaml)
       - name: Checkout Your Code
         uses: actions/checkout@v4
 
-      # الخطوة 2: إعداد بيئة فلاتر
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
 
-      # الخطوة 3: (هذه هي الخطوة السحرية)
-      # إنشاء مشروع فلاتر جديد ونظيف حول الكود الخاص بك
-      # هذا سيقوم بإنشاء مجلدات android و ios حديثة وصحيحة
-      - name: Recreate Project Structure
+      # هذه هي الخطوة التي تم إصلاحها
+      - name: Recreate Project Structure (Fixed)
         run: |
-          # إنشاء مشروع مؤقت
+          # إنشاء مشروع مؤقت جديد وسليم
           flutter create temp_project
-          # نقل قلب مشروعك (الكود والحزم) إلى المشروع النظيف
+          
+          # --- هذا هو الإصلاح المهم ---
+          # نحذف المجلدات الفارغة من المشروع الجديد أولاً
+          rm -rf temp_project/lib
+          rm -f temp_project/pubspec.yaml
+          
+          # الآن ننقل ملفاتك بأمان إلى المشروع الجديد
           mv lib temp_project/
           mv pubspec.yaml temp_project/
-          # إذا كان لديك مجلد assets، انقله أيضًا
           if [ -d "assets" ]; then mv assets temp_project/; fi
-          # استبدال كل شيء بالمشروع النظيف
+          
+          # نستبدل كل شيء بالمشروع النظيف
           mv temp_project/* .
           rm -rf temp_project
 
-      # الخطوة 4: تحميل الحزم والمكتبات للمشروع الجديد
       - name: Get Dependencies for New Structure
         run: flutter pub get
 
-      # الخطوة 5: إعطاء صلاحية التنفيذ لملف Gradle (الذي تم إنشاؤه حديثًا)
       - name: Grant Execute Permission for Gradlew
         run: chmod +x android/gradlew
 
-      # الخطوة 6: بناء نسخة الأندرويد النهائية
       - name: Build Android App Bundle
-        run: flutter build appbundle
+        run: flutter build appbundle --release
 
-      # الخطوة 7: رفع الملف الناتج ليكون جاهزًا للتحميل
       - name: Upload Release Artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-bundle
           path: build/app/outputs/bundle/release/app-release.aab
-
-
-
