@@ -2,103 +2,71 @@ name: Build Flutter App
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # الخطوة 1: تحميل الكود من المستودع
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # الخطوة 2: تثبيت JDK 17
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # الخطوة 3: تثبيت Flutter
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           flutter-version: '3.22.2'
 
-      # الخطوة 4: إنشاء ملفات المكونات المفقودة
-      - name: Create missing widget files
+      - name: Fix Gradle configuration
         run: |
-          mkdir -p lib/widgets
-          
-          # إنشاء ملف app_drawer.dart
-          echo "import 'package:flutter/material.dart';
-          
-          class AppDrawer extends StatelessWidget {
-            const AppDrawer({super.key});
-          
-            @override
-            Widget build(BuildContext context) {
-              return Drawer(
-                child: ListView(
-                  children: const [
-                    ListTile(
-                      title: Text('الإعدادات'),
-                    ),
-                    ListTile(
-                      title: Text('حول التطبيق'),
-                    ),
-                  ],
-                ),
-              );
-            }
-          }" > lib/widgets/app_drawer.dart
-          
-          # إنشاء ملف section_card.dart
-          echo "import 'package:flutter/material.dart';
-          
-          class SectionCard extends StatelessWidget {
-            final String title;
-            final IconData icon;
-            final VoidCallback onTap;
-          
-            const SectionCard({
-              super.key,
-              required this.title,
-              required this.icon,
-              required this.onTap,
-            });
-          
-            @override
-            Widget build(BuildContext context) {
-              return Card(
-                child: ListTile(
-                  leading: Icon(icon),
-                  title: Text(title),
-                  onTap: onTap,
-                ),
-              );
-            }
-          }" > lib/widgets/section_card.dart
+          # تحديث إصدار Gradle
+          echo "distributionBase=GRADLE_USER_HOME" > android/gradle/wrapper/gradle-wrapper.properties
+          echo "distributionPath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties
+          echo "distributionUrl=https\\\\://services.gradle.org/distributions/gradle-8.4-all.zip" >> android/gradle/wrapper/gradle-wrapper.properties
+          echo "zipStoreBase=GRADLE_USER_HOME" >> android/gradle/wrapper/gradle-wrapper.properties
+          echo "zipStorePath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties
 
-      # الخطوة 5: إنشاء هيكل Android
-      - name: Create Android structure
-        run: flutter create --platforms=android --org com.example .
+          # إصلاح ملف build.gradle الرئيسي
+          cat > android/build.gradle << 'EOL'
+buildscript {
+    ext.kotlin_version = '1.9.22'
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.1.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
 
-      # الخطوة 6: منح صلاحيات تنفيذ لملف gradlew
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+EOL
+
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      # الخطوة 7: تثبيت dependencies
       - name: Get packages
         run: flutter pub get
 
-      # الخطوة 8: بناء حزمة التطبيق
       - name: Build Android App Bundle
         run: flutter build appbundle
 
-      # الخطوة 9: رفع الملف الناتج
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
