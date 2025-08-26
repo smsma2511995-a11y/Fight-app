@@ -1,47 +1,58 @@
-name: Build Flutter Android App
+# اسم سير العمل: نسخة قوية ومحسنة
+name: Robust Flutter Build & Release
 
+# متى يتم تشغيله
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
+# المهام التي سيتم تنفيذها
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # الخطوة 1: تنزيل الكود
-      - name: Checkout repository code
+      # الخطوة 1: تنزيل الكود من المستودع
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      # الخطوة 2: إعداد بيئة جافا
-      - name: Setup Java JDK
+      # الخطوة 2: إعداد بيئة جافا (مطلوبة للأندرويد)
+      - name: Setup Java (JDK)
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
           distribution: 'temurin'
+          java-version: '17'
 
-      # الخطوة 3: إعداد فلاتر
-      - name: Setup Flutter SDK
+      # الخطوة 3: إعداد بيئة فلاتر
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          # هذه الخطوة مهمة لتسريع عمليات البناء المستقبلية
+          cache: true
 
-      # الخطوة 4: تحميل الحزم (هذه الخطوة ستقوم بإنشاء مجلد android)
-      - name: Get Flutter dependencies
+      # الخطوة 4: (هذه هي الخطوة السحرية)
+      # تقوم بإنشاء مجلدات android/ios إذا كانت مفقودة
+      - name: Restore Missing Platform Folders
+        run: flutter create .
+
+      # الخطوة 5: تحميل الحزم والمكتبات
+      - name: Get Flutter Dependencies
         run: flutter pub get
 
-      # الخطوة 5: جعل ملف Gradle قابلاً للتنفيذ (الآن يجب أن يعمل)
-      - name: Make gradlew executable
+      # الخطوة 6: إعطاء صلاحية التنفيذ لملف Gradle
+      # ستنجح هذه المرة لأن الخطوة 4 ضمنت وجود الملف
+      - name: Grant Execute Permission for Gradlew
         run: chmod +x android/gradlew
-        
-      # الخطوة 6: بناء نسخة الأندرويد النهائية
+
+      # الخطوة 7: بناء نسخة الأندرويد النهائية
       - name: Build Android App Bundle
         run: flutter build appbundle
 
-      # الخطوة 7: رفع الملف الناتج ليكون جاهزًا للتحميل
-      - name: Upload release artifact
+      # الخطوة 8: رفع الملف الناتج ليكون جاهزًا للتحميل
+      - name: Upload Release Artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-bundle
