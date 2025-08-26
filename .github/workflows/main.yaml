@@ -2,7 +2,7 @@ name: Build Flutter App
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
@@ -27,83 +27,64 @@ jobs:
           channel: 'stable'
           flutter-version: '3.22.2'
 
-      # الخطوة 4: إصلاح جميع الأخطاء في الكود
-      - name: Fix all code issues
+      # الخطوة 4: إنشاء ملفات المكونات المفقودة
+      - name: Create missing widget files
         run: |
-          # 1. إنشاء الملفات المفقودة
           mkdir -p lib/widgets
           
-          # إنشاء app_drawer.dart
-          cat > lib/widgets/app_drawer.dart << 'EOL'
-import 'package:flutter/material.dart';
+          # إنشاء ملف app_drawer.dart
+          echo "import 'package:flutter/material.dart';
+          
+          class AppDrawer extends StatelessWidget {
+            const AppDrawer({super.key});
+          
+            @override
+            Widget build(BuildContext context) {
+              return Drawer(
+                child: ListView(
+                  children: const [
+                    ListTile(
+                      title: Text('الإعدادات'),
+                    ),
+                    ListTile(
+                      title: Text('حول التطبيق'),
+                    ),
+                  ],
+                ),
+              );
+            }
+          }" > lib/widgets/app_drawer.dart
+          
+          # إنشاء ملف section_card.dart
+          echo "import 'package:flutter/material.dart';
+          
+          class SectionCard extends StatelessWidget {
+            final String title;
+            final IconData icon;
+            final VoidCallback onTap;
+          
+            const SectionCard({
+              super.key,
+              required this.title,
+              required this.icon,
+              required this.onTap,
+            });
+          
+            @override
+            Widget build(BuildContext context) {
+              return Card(
+                child: ListTile(
+                  leading: Icon(icon),
+                  title: Text(title),
+                  onTap: onTap,
+                ),
+              );
+            }
+          }" > lib/widgets/section_card.dart
 
-class AppDrawer extends StatelessWidget {
-  const AppDrawer({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        children: const [
-          ListTile(
-            title: Text('الإعدادات'),
-          ),
-          ListTile(
-            title: Text('حول التطبيق'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-EOL
-
-          # إنشاء section_card.dart
-          cat > lib/widgets/section_card.dart << 'EOL'
-import 'package:flutter/material.dart';
-
-class SectionCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const SectionCard({
-    super.key,
-    required this.title,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: Icon(icon),
-        title: Text(title),
-        onTap: onTap,
-      ),
-    );
-  }
-}
-EOL
-
-          # 2. إصلاح أخطاء exercises_seed.dart
-          if [ -f "lib/data/exercises_seed.dart" ]; then
-            # إصلاح السطر الناقص
-            sed -i 's/name: "إطالة$/name: "إطالة",/' lib/data/exercises_seed.dart
-            
-            # إغلاق الأقواس المفتوحة
-            sed -i 's/Exercise($/Exercise(/' lib/data/exercises_seed.dart
-            echo "]);" >> lib/data/exercises_seed.dart
-          fi
-
-      # الخطوة 5: إنشاء هيكل Android إذا كان مفقوداً
+      # الخطوة 5: إنشاء هيكل Android
       - name: Create Android structure
-        run: |
-          if [ ! -d "android" ] || [ ! -f "android/gradlew" ]; then
-            echo "إنشاء هيكل Android جديد..."
-            flutter create --platforms=android --org com.example .
-          fi
+        run: flutter create --platforms=android --org com.example .
 
       # الخطوة 6: منح صلاحيات تنفيذ لملف gradlew
       - name: Make gradlew executable
