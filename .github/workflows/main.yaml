@@ -10,41 +10,39 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # --- هذا هو التعديل المهم ---
-    # يخبر كل الخطوات أن تعمل داخل مجلد مشروعك
-    defaults:
-      run:
-        working-directory: fight__app # <-- غيّر هذا إلى اسم المجلد الصحيح
-
     steps:
+      # الخطوة 1: تنزيل الكود
       - name: Checkout repository code
         uses: actions/checkout@v4
 
+      # الخطوة 2: إعداد بيئة جافا
       - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
+      # الخطوة 3: إعداد فلاتر
       - name: Setup Flutter SDK
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
-      # لاحظ أننا لم نعد نحتاج لكتابة android/gradlew
-      # لأننا بالفعل داخل المجلد الصحيح
-      - name: Make gradlew executable
-        run: chmod +x gradlew
-        
+      # الخطوة 4: تحميل الحزم (هذه الخطوة ستقوم بإنشاء مجلد android)
       - name: Get Flutter dependencies
         run: flutter pub get
 
+      # الخطوة 5: جعل ملف Gradle قابلاً للتنفيذ (الآن يجب أن يعمل)
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+        
+      # الخطوة 6: بناء نسخة الأندرويد النهائية
       - name: Build Android App Bundle
         run: flutter build appbundle
 
+      # الخطوة 7: رفع الملف الناتج ليكون جاهزًا للتحميل
       - name: Upload release artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-bundle
-          # تم تحديث المسار هنا أيضًا
-          path: fight__app/build/app/outputs/bundle/release/app-release.aab
+          path: build/app/outputs/bundle/release/app-release.aab
