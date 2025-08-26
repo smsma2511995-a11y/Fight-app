@@ -1,54 +1,50 @@
-# اسم سير العمل
 name: Build Flutter Android App
 
-# متى يتم تشغيله
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
-# المهام التي سيتم تنفيذها
 jobs:
   build:
-    # سيتم البناء على جهاز افتراضي بنظام أوبنتو
     runs-on: ubuntu-latest
 
-    # الخطوات مرتبة
+    # --- هذا هو التعديل المهم ---
+    # يخبر كل الخطوات أن تعمل داخل مجلد مشروعك
+    defaults:
+      run:
+        working-directory: fight__app # <-- غيّر هذا إلى اسم المجلد الصحيح
+
     steps:
-      # الخطوة 1: تنزيل الكود من المستودع
       - name: Checkout repository code
         uses: actions/checkout@v4
 
-      # الخطوة 2: إعداد بيئة جافا (مطلوبة للأندرويد)
       - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # الخطوة 3: إعداد فلاتر
       - name: Setup Flutter SDK
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
-      # الخطوة 4: جعل ملف Gradle قابلاً للتنفيذ
+      # لاحظ أننا لم نعد نحتاج لكتابة android/gradlew
+      # لأننا بالفعل داخل المجلد الصحيح
       - name: Make gradlew executable
-        run: chmod +x android/gradlew
+        run: chmod +x gradlew
         
-      # الخطوة 5: تحميل الحزم والمكتبات
       - name: Get Flutter dependencies
         run: flutter pub get
 
-      # الخطوة 6: بناء نسخة الأندرويد النهائية
       - name: Build Android App Bundle
         run: flutter build appbundle
 
-      # الخطوة 7: رفع الملف الناتج ليكون جاهزًا للتحميل
       - name: Upload release artifact
-        uses: actions/upload-artifact@v4 # <-- تم التحديث هنا من v3 إلى v4
+        uses: actions/upload-artifact@v4
         with:
           name: release-bundle
-          path: build/app/outputs/bundle/release/app-release.aab
-          
+          # تم تحديث المسار هنا أيضًا
+          path: fight__app/build/app/outputs/bundle/release/app-release.aab
