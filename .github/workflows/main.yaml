@@ -27,88 +27,7 @@ jobs:
           channel: 'stable'
           flutter-version: '3.22.2'
 
-      # الخطوة 4: إصلاح جميع الأخطاء في الكود
-      - name: Fix all code issues
-        run: |
-          # 1. إصلاح أخطاء exercises_seed.dart (أقواس غير مغلقة، أسطر غير مكتملة)
-          if [ -f "lib/data/exercises_seed.dart" ]; then
-            # نسخ احتياطي
-            cp lib/data/exercises_seed.dart lib/data/exercises_seed.backup.dart
-            
-            # إصلاح الأخطاء النحوية
-            sed -i 's/name: "إطالة$/name: "إطالة",/g' lib/data/exercises_seed.dart
-            sed -i 's/Exercise($/Exercise(/g' lib/data/exercises_seed.dart
-            sed -i 's/\[$/[/g' lib/data/exercises_seed.dart
-            
-            # إغلاق جميع الأقواس المفتوحة في نهاية الملف
-            echo "]);" >> lib/data/exercises_seed.dart
-          fi
-
-          # 2. إنشاء الملفات المفقودة (app_drawer.dart و section_card.dart)
-          if [ ! -f "lib/widgets/app_drawer.dart" ]; then
-            mkdir -p lib/widgets
-            cat > lib/widgets/app_drawer.dart << 'EOL'
-import 'package:flutter/material.dart';
-
-class AppDrawer extends StatelessWidget {
-  const AppDrawer({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        children: const [
-          ListTile(
-            title: Text('الإعدادات'),
-          ),
-          ListTile(
-            title: Text('حول التطبيق'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-EOL
-          fi
-
-          if [ ! -f "lib/widgets/section_card.dart" ]; then
-            mkdir -p lib/widgets
-            cat > lib/widgets/section_card.dart << 'EOL'
-import 'package:flutter/material.dart';
-
-class SectionCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const SectionCard({
-    super.key,
-    required this.title,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: Icon(icon),
-        title: Text(title),
-        onTap: onTap,
-      ),
-    );
-  }
-}
-EOL
-          fi
-
-          # 3. إصلاح استدعاءات SectionCard في dashboard_screen.dart
-          if [ -f "lib/screens/dashboard_screen.dart" ]; then
-            sed -i 's/SectionCard(/SectionCard(title: "عنوان", icon: Icons.star, onTap: () {},/g' lib/screens/dashboard_screen.dart
-          fi
-
-      # الخطوة 5: إنشاء هيكل Android إذا كان مفقوداً
+      # الخطوة 4: إنشاء هيكل Android إذا كان مفقوداً
       - name: Create Android structure
         run: |
           if [ ! -d "android" ] || [ ! -f "android/gradlew" ]; then
@@ -118,28 +37,21 @@ EOL
             rm -rf temp_project
           fi
 
-      # الخطوة 6: منح صلاحيات تنفيذ لملف gradlew
+      # الخطوة 5: منح صلاحيات تنفيذ لملف gradlew
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      # الخطوة 7: تثبيت dependencies
+      # الخطوة 6: تثبيت dependencies
       - name: Get packages
         run: flutter pub get
 
-      # الخطوة 8: بناء حزمة التطبيق
+      # الخطوة 7: بناء حزمة التطبيق
       - name: Build Android App Bundle
         run: flutter build appbundle
 
-      # الخطوة 9: رفع الملف الناتج
+      # الخطوة 8: رفع الملف الناتج
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-bundle
           path: build/app/outputs/bundle/release/app-release.aab
-
-      # الخطوة 10: استعادة الملفات الأصلية (اختياري)
-      - name: Restore original files
-        run: |
-          if [ -f "lib/data/exercises_seed.backup.dart" ]; then
-            mv lib/data/exercises_seed.backup.dart lib/data/exercises_seed.dart
-          fi
