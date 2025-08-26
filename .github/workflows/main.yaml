@@ -1,76 +1,54 @@
+name: Build Flutter Android App
 
-name: Build Flutter App
-
+# متى يتم تشغيله
 on:
   push:
     branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
+# المهام التي سيتم تنفيذها
 jobs:
   build:
+    # سيتم البناء على جهاز افتراضي بنظام أوبنتو
     runs-on: ubuntu-latest
 
+    # الخطوات مرتبة
     steps:
-      # الخطوة 1: تنزيل الكود
-      - uses: actions/checkout@v4
+      # الخطوة 1: تنزيل الكود من المستودع
+      - name: Checkout repository code
+        uses: actions/checkout@v4
 
-      # الخطوة 2: إعداد بيئة جافا (مهم جدا للأندرويد الحديث)
-      - name: Set up JDK 17
+      # الخطوة 2: إعداد بيئة جافا (مطلوبة للأندرويد)
+      - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # الخطوة 3: تثبيت فلاتر
-      - name: Install Flutter
+      # الخطوة 3: إعداد فلاتر
+      - name: Setup Flutter SDK
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          # يمكنك إزالة هذا السطر ليستخدم أحدث إصدار مستقر دائماً
-          flutter-version: '3.22.2' 
 
-      # الخطوة 4 (اختيارية ولكنها جيدة): إصلاح ملفات Gradle تلقائياً
-      # هذه الخطوة مفيدة إذا كانت ملفات Gradle في مشروعك قديمة
-      - name: Fix Gradle configuration
-        run: |
-          # إصلاح ملف build.gradle الرئيسي
-          # --- لقد أضفنا سطر ext.kotlin_version هنا في الأعلى ---
-          cat > android/build.gradle << 'EOL'
-buildscript {
-    ext.kotlin_version = '1.9.22'
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:8.1.2'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-}
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
-}
-EOL
-
-      # الخطوة 5: جعل ملف gradlew قابلاً للتنفيذ
+      # الخطوة 4: جعل ملف Gradle قابلاً للتنفيذ
       - name: Make gradlew executable
         run: chmod +x android/gradlew
-
-      # الخطوة 6: الحصول على الحزم
-      - name: Get packages
+        
+      # الخطوة 5: تحميل الحزم والمكتبات
+      - name: Get Flutter dependencies
         run: flutter pub get
 
-      # الخطوة 7: بناء التطبيق
+      # الخطوة 6: بناء نسخة الأندرويد النهائية
       - name: Build Android App Bundle
         run: flutter build appbundle
 
-# --- تم حذف السطر الخاطئ من هنا ---
-```
+      # الخطوة 7: رفع الملف الناتج ليكون جاهزًا للتحميل
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-bundle
+          path: build/app/outputs/bundle/release/app-release.aab
+
 
