@@ -27,20 +27,7 @@ jobs:
           channel: 'stable'
           flutter-version: '3.22.2'
 
-      # الخطوة 4: إصلاح أخطاء Exercise constructor
-      - name: Fix Exercise constructor issues
-        run: |
-          # نسخ الملف الأصلي للاحتفاظ بنسخة احتياطية
-          cp lib/data/exercises_seed.dart lib/data/exercises_seed.backup.dart
-          
-          # إصلاح جميع استدعاءات Exercise constructor
-          sed -i 's/Exercise(description: "وصف افتراضي", /Exercise(/g' lib/data/exercises_seed.dart
-          
-          # إضافة المعلمات المطلوبة بشكل صحيح
-          # هذا مثال عام - قد تحتاج لتعديله حسب هيكل Exercise الحقيقي
-          sed -i 's/Exercise(/Exercise(id: 1, name: "تمرين", description: "وصف", /g' lib/data/exercises_seed.dart
-
-      # الخطوة 5: إنشاء هيكل Android إذا كان مفقوداً
+      # الخطوة 4: إنشاء هيكل Android إذا كان مفقوداً
       - name: Create Android structure
         run: |
           if [ ! -d "android" ] || [ ! -f "android/gradlew" ]; then
@@ -50,26 +37,21 @@ jobs:
             rm -rf temp_project
           fi
 
-      # الخطوة 6: منح صلاحيات تنفيذ لملف gradlew
+      # الخطوة 5: منح صلاحيات تنفيذ لملف gradlew
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      # الخطوة 7: تثبيت dependencies
+      # الخطوة 6: تثبيت dependencies
       - name: Get packages
         run: flutter pub get
 
-      # الخطوة 8: بناء حزمة التطبيق (بتخطي التحقق من الأخطاء مؤقتاً)
+      # الخطوة 7: بناء حزمة التطبيق (بدون الخيار غير المعروف)
       - name: Build Android App Bundle
-        run: flutter build appbundle --no-pub --no-analyze
+        run: flutter build appbundle
 
-      # الخطوة 9: رفع الملف الناتج
+      # الخطوة 8: رفع الملف الناتج
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-bundle
           path: build/app/outputs/bundle/release/app-release.aab
-
-      # الخطوة 10: استعادة الملف الأصلي
-      - name: Restore original file
-        run: |
-          mv lib/data/exercises_seed.backup.dart lib/data/exercises_seed.dart
