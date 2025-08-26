@@ -1,59 +1,62 @@
-# اسم سير العمل: نسخة قوية ومحسنة
-name: Robust Flutter Build & Release
+# اسم سير العمل: النسخة النهائية ذاتية الإصلاح
+name: Self-Healing Flutter Build
 
-# متى يتم تشغيله
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
-# المهام التي سيتم تنفيذها
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # الخطوة 1: تنزيل الكود من المستودع
-      - name: Checkout Code
+      # الخطوة 1: تنزيل الكود الذي رفعته (فقط مجلد lib و pubspec.yaml)
+      - name: Checkout Your Code
         uses: actions/checkout@v4
 
-      # الخطوة 2: إعداد بيئة جافا (مطلوبة للأندرويد)
-      - name: Setup Java (JDK)
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      # الخطوة 3: إعداد بيئة فلاتر
+      # الخطوة 2: إعداد بيئة فلاتر
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          # هذه الخطوة مهمة لتسريع عمليات البناء المستقبلية
           cache: true
 
-      # الخطوة 4: (هذه هي الخطوة السحرية)
-      # تقوم بإنشاء مجلدات android/ios إذا كانت مفقودة
-      - name: Restore Missing Platform Folders
-        run: flutter create .
+      # الخطوة 3: (هذه هي الخطوة السحرية)
+      # إنشاء مشروع فلاتر جديد ونظيف حول الكود الخاص بك
+      # هذا سيقوم بإنشاء مجلدات android و ios حديثة وصحيحة
+      - name: Recreate Project Structure
+        run: |
+          # إنشاء مشروع مؤقت
+          flutter create temp_project
+          # نقل قلب مشروعك (الكود والحزم) إلى المشروع النظيف
+          mv lib temp_project/
+          mv pubspec.yaml temp_project/
+          # إذا كان لديك مجلد assets، انقله أيضًا
+          if [ -d "assets" ]; then mv assets temp_project/; fi
+          # استبدال كل شيء بالمشروع النظيف
+          mv temp_project/* .
+          rm -rf temp_project
 
-      # الخطوة 5: تحميل الحزم والمكتبات
-      - name: Get Flutter Dependencies
+      # الخطوة 4: تحميل الحزم والمكتبات للمشروع الجديد
+      - name: Get Dependencies for New Structure
         run: flutter pub get
 
-      # الخطوة 6: إعطاء صلاحية التنفيذ لملف Gradle
-      # ستنجح هذه المرة لأن الخطوة 4 ضمنت وجود الملف
+      # الخطوة 5: إعطاء صلاحية التنفيذ لملف Gradle (الذي تم إنشاؤه حديثًا)
       - name: Grant Execute Permission for Gradlew
         run: chmod +x android/gradlew
 
-      # الخطوة 7: بناء نسخة الأندرويد النهائية
+      # الخطوة 6: بناء نسخة الأندرويد النهائية
       - name: Build Android App Bundle
         run: flutter build appbundle
 
-      # الخطوة 8: رفع الملف الناتج ليكون جاهزًا للتحميل
+      # الخطوة 7: رفع الملف الناتج ليكون جاهزًا للتحميل
       - name: Upload Release Artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-bundle
           path: build/app/outputs/bundle/release/app-release.aab
+
+
+
