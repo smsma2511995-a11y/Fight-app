@@ -1,5 +1,8 @@
-import 'package.fight_app/widgets/app_drawer.dart';
-import 'package.fight_app/widgets/section_card.dart';
+import 'package:flutter/material.dart';
+
+// --- هذا هو الإصلاح: تم استخدام ":" بدلاً من "." ---
+import 'package:fight_app/widgets/app_drawer.dart';
+import 'package:fight_app/widgets/section_card.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -15,7 +18,7 @@ class DashboardScreen extends StatelessWidget {
         child: SectionCard(
           title: 'Exercises',
           icon: Icons.fitness_center,
-          onTap: null, // تم تعطيل onTap مؤقتًا لتجنب الأخطاء
+          onTap: null,
         ),
       ),
     );
