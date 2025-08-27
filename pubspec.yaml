@@ -12,13 +12,13 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  # UI & Utilities - UPDATED
+  # UI & Utilities
   cupertino_icons: ^1.0.8
   google_fonts: ^6.2.1
-  percent_indicator: ^4.2.3 # This was already up to date
-  fl_chart: ^0.68.0        # UPDATED
+  percent_indicator: ^4.2.3
+  fl_chart: ^0.68.0
   
-  # Core Packages - UPDATED
+  # Core Packages
   sqflite: ^2.3.2
   path_provider: ^2.1.2
   flutter_riverpod: ^2.5.1
@@ -28,26 +28,24 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  
-  # Lints - UPDATED
   flutter_lints: ^3.0.0
 
+# --- هذا هو الإصلاح الحاسم ---
 flutter:
   uses-material-design: true
 
+  # يجب أن تعرف كل مجلدات الأصول هنا
   assets:
-    - assets/data/exercises.json
+    - assets/data/
     - assets/images/
     - assets/images/karate/
-    #... all other asset folders
     - assets/sounds/
     - assets/fonts/
 
+  # ويجب أن تعرف الخطوط هنا
   fonts:
     - family: Cairo
       fonts:
         - asset: assets/fonts/Cairo-Regular.ttf
         - asset: assets/fonts/Cairo-Bold.ttf
           weight: 700
-
-
