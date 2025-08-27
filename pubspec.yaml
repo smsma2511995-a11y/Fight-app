@@ -12,25 +12,25 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  # UI & Utilities
-  cupertino_icons: ^1.0.6
-  google_fonts: ^6.1.0
-  percent_indicator: ^4.2.3 # For progress bars
-  fl_chart: ^0.64.0        # For progress graphs
+  # UI & Utilities - UPDATED
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+  percent_indicator: ^4.2.3 # This was already up to date
+  fl_chart: ^0.68.0        # UPDATED
   
-  # Other packages from before...
-  sqflite: ^2.3.0
-  path_provider: ^2.1.1
-  flutter_riverpod: ^2.4.9
-  flutter_tts: ^3.8.3
-  just_audio: ^0.9.36
-  #... etc.
-
+  # Core Packages - UPDATED
+  sqflite: ^2.3.2
+  path_provider: ^2.1.2
+  flutter_riverpod: ^2.5.1
+  flutter_tts: ^4.0.2
+  just_audio: ^0.9.37
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
+  
+  # Lints - UPDATED
+  flutter_lints: ^3.0.0
 
 flutter:
   uses-material-design: true
@@ -49,3 +49,5 @@ flutter:
         - asset: assets/fonts/Cairo-Regular.ttf
         - asset: assets/fonts/Cairo-Bold.ttf
           weight: 700
+
+
