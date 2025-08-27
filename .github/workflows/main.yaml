@@ -1,5 +1,5 @@
-# اسم سير العمل: النسخة النهائية والمضمونة
-name: Final Guaranteed Flutter Build
+# اسم سير العمل: النسخة النهائية والمضمونة (الإصدار 2)
+name: Final Guaranteed Flutter Build v2
 
 on:
   push:
@@ -22,24 +22,27 @@ jobs:
           cache: true
 
       # هذه هي الخطوة التي تم إصلاحها
-      - name: Recreate Project Structure (Fixed)
+      - name: Recreate Project Structure (The Clean Slate Method)
         run: |
-          # إنشاء مشروع مؤقت جديد وسليم
-          flutter create temp_project
+          # حفظ الملفات الأساسية (الكود والحزم والأصول) في مكان آمن
+          mkdir safe_place
+          mv lib safe_place/
+          mv pubspec.yaml safe_place/
+          if [ -d "assets" ]; then mv assets safe_place/; fi
           
-          # --- هذا هو الإصلاح المهم ---
-          # نحذف المجلدات الفارغة من المشروع الجديد أولاً
-          rm -rf temp_project/lib
-          rm -f temp_project/pubspec.yaml
+          # --- هذا هو الإصلاح الحاسم ---
+          # مسح كل شيء آخر في المجلد الرئيسي لضمان بداية نظيفة
+          # ls -a1 | grep -v -E "^\.$|^\.\.$|^\.git$|^\.github$|^safe_place$" | xargs rm -rf
           
-          # الآن ننقل ملفاتك بأمان إلى المشروع الجديد
-          mv lib temp_project/
-          mv pubspec.yaml temp_project/
-          if [ -d "assets" ]; then mv assets temp_project/; fi
+          # إنشاء مشروع فلاتر جديد ونظيف في المجلد الحالي
+          flutter create .
           
-          # نستبدل كل شيء بالمشروع النظيف
-          mv temp_project/* .
-          rm -rf temp_project
+          # حذف المجلدات المؤقتة من المشروع الجديد
+          rm -rf lib
+          
+          # استعادة ملفاتك الأساسية من المكان الآمن
+          mv safe_place/* .
+          rm -rf safe_place
 
       - name: Get Dependencies for New Structure
         run: flutter pub get
