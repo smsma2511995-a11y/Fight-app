@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-
-// --- تم الإصلاح هنا ---
-// تم التأكد من أن مسارات الاستيراد صحيحة.
-// الرجاء التأكد من أن أسماء الملفات في مجلد 'widgets' مطابقة لهذه الأسماء تمامًا.
 import 'package:integrated_martial_arts_trainer/widgets/app_drawer.dart';
 import 'package:integrated_martial_arts_trainer/widgets/section_card.dart';
 
@@ -15,46 +11,45 @@ class DashboardScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('لوحة التحكم'),
       ),
-      
-      // --- تم الإصلاح هنا ---
-      // تم حذف 'const' لتجنب الأخطاء
-      drawer: AppDrawer(),
-
-      body: GridView.count(
-        crossAxisCount: 2,
+      drawer: const AppDrawer(),
+      body: Padding(
         padding: const EdgeInsets.all(16.0),
-        crossAxisSpacing: 16.0,
-        mainAxisSpacing: 16.0,
-        children: <Widget>[
-          SectionCard(
-            title: 'تمارين',
-            icon: Icons.fitness_center,
-            onTap: () {
-              // Navigate to exercises screen
-            },
-          ),
-          SectionCard(
-            title: 'خطط التغذية',
-            icon: Icons.restaurant_menu,
-            onTap: () {
-              // Navigate to diet plans screen
-            },
-          ),
-          SectionCard(
-            title: 'المدرب الذكي',
-            icon: Icons.lightbulb_outline,
-            onTap: () {
-              // Navigate to smart coach screen
-            },
-          ),
-          SectionCard(
-            title: 'تتبع التقدم',
-            icon: Icons.show_chart,
-            onTap: () {
-              // Navigate to progress tracking screen
-            },
-          ),
-        ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SectionCard(
+              title: "التمارين الأساسية",
+              icon: Icons.fitness_center,
+              onTap: () {
+                // التنقل إلى شاشة التمارين
+              },
+            ),
+            const SizedBox(height: 16),
+            SectionCard(
+              title: "الإحصائيات",
+              icon: Icons.bar_chart,
+              onTap: () {
+                // التنقل إلى شاشة الإحصائيات
+              },
+            ),
+            const SizedBox(height: 16),
+            SectionCard(
+              title: "الملف الشخصي",
+              icon: Icons.person,
+              onTap: () {
+                // التنقل إلى الملف الشخصي
+              },
+            ),
+            const SizedBox(height: 16),
+            SectionCard(
+              title: "الإعدادات",
+              icon: Icons.settings,
+              onTap: () {
+                // التنقل إلى الإعدادات
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
