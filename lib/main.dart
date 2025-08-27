@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:integrated_martial_arts_trainer/screens/dashboard_screen.dart'; // Import the new dashboard
+import 'package:integrated_martial_arts_trainer/screens/dashboard_screen.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -15,55 +13,53 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'مدرب الفنون القتالية المتكامل',
-      debugShowCheckedModeBanner: false,
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('ar', 'SA')],
-      locale: const Locale('ar', 'SA'),
-      theme: _buildTheme(Brightness.light),
-      darkTheme: _buildTheme(Brightness.dark),
-      themeMode: ThemeMode.system,
-      home: const Directionality(
-        textDirection: TextDirection.rtl,
-        child: DashboardScreen(), // Set DashboardScreen as the home
-      ),
-    );
-  }
-  
-  // _buildTheme method remains the same as before
-  ThemeData _buildTheme(Brightness brightness) {
-    var baseTheme = ThemeData(
-      brightness: brightness,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: Colors.red.shade900,
-        brightness: brightness,
-      ),
-      useMaterial3: true,
-      fontFamily: GoogleFonts.cairo().fontFamily,
-      appBarTheme: AppBarTheme(
-        backgroundColor: brightness == Brightness.dark
-            ? Colors.black26
-            : Colors.red.shade800,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        titleTextStyle: GoogleFonts.cairo(
-          fontWeight: FontWeight.bold,
-          fontSize: 20,
+      title: 'Integrated Martial Arts Trainer',
+      theme: ThemeData.dark().copyWith(
+        primaryColor: Colors.red[700],
+        scaffoldBackgroundColor: const Color(0xFF121212),
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.red[900],
+          elevation: 4,
+          titleTextStyle: GoogleFonts.cairo(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-      ),
-      cardTheme: CardTheme(
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+        textTheme: GoogleFonts.cairoTextTheme(
+          Theme.of(context).textTheme,
+        ).apply(
+          bodyColor: Colors.white,
+          displayColor: Colors.white,
         ),
-      ),
-    );
+        
+        // --- تم الإصلاح هنا ---
+        cardTheme: CardThemeData(
+          color: const Color(0xFF1E1E1E),
+          elevation: 5,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        ),
 
-    return baseTheme;
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red[700],
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          ),
+        ),
+        colorScheme: ColorScheme.fromSwatch(
+          primarySwatch: Colors.red,
+          brightness: Brightness.dark,
+        ).copyWith(
+          secondary: Colors.redAccent,
+        ),
+      ),
+      home: const DashboardScreen(),
+    );
   }
 }
