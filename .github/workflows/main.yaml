@@ -1,4 +1,4 @@
-name: Build Flutter App
+name: The Surgical Fix - Final Build
 
 on:
   push:
@@ -9,110 +9,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      # الخطوة 1: تنزيل الكود
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Install Flutter
+      # الخطوة 2: إعداد فلاتر
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.22.2'
+          cache: true
+      
+      # الخطوة 3: (الجراحة) حذف أي مجلد android قديم
+      - name: SURGICAL STEP - Remove Old Android Folder
+        run: rm -rf android
 
-      - name: Create missing widget files
-        run: |
-          mkdir -p lib/widgets
-          
-          # إنشاء app_drawer.dart
-          cat > lib/widgets/app_drawer.dart << 'EOL'
-import 'package:flutter/material.dart';
+      # الخطوة 4: (إعادة البناء) إنشاء مجلد android جديد وسليم
+      - name: Rebuild Clean Android Folder
+        run: flutter create --platforms=android .
 
-class AppDrawer extends StatelessWidget {
-  const AppDrawer({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        children: const [
-          ListTile(
-            leading: Icon(Icons.settings),
-            title: Text('الإعدادات'),
-          ),
-          ListTile(
-            leading: Icon(Icons.info),
-            title: Text('حول التطبيق'),
-          ),
-          ListTile(
-            leading: Icon(Icons.exit_to_app),
-            title: Text('خروج'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-EOL
-
-          # إنشاء section_card.dart
-          cat > lib/widgets/section_card.dart << 'EOL'
-import 'package:flutter/material.dart';
-
-class SectionCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const SectionCard({
-    super.key,
-    required this.title,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.all(8),
-      child: ListTile(
-        leading: Icon(icon, size: 30),
-        title: Text(
-          title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios),
-        onTap: onTap,
-      ),
-    );
-  }
-}
-EOL
-
-      - name: Fix dashboard screen imports
-        run: |
-          # تأكد من أن الاستيرادات صحيحة في dashboard_screen.dart
-          if [ -f "lib/screens/dashboard_screen.dart" ]; then
-            sed -i 's/AppDrawer()/const AppDrawer()/g' lib/screens/dashboard_screen.dart
-          fi
-
-      - name: Setup Android project
-        run: flutter create --platforms=android --org com.example .
-
-      - name: Make gradlew executable
-        run: chmod +x android/gradlew
-
-      - name: Get packages
+      # الخطوة 5: تحميل الحزم
+      - name: Get Dependencies
         run: flutter pub get
 
+      # الخطوة 6: بناء نسخة الأندرويد النهائية
       - name: Build Android App Bundle
-        run: flutter build appbundle
+        run: flutter build appbundle --release
 
-      - name: Upload Artifact
+      # الخطوة 7: رفع الملف الناتج
+      - name: Upload Release Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-bundle
+          name: release-bundle
           path: build/app/outputs/bundle/release/app-release.aab
