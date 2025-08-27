@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-// --- هذا هو الإصلاح: تم استخدام ":" بدلاً من "." ---
 import 'package:fight_app/widgets/app_drawer.dart';
 import 'package:fight_app/widgets/section_card.dart';
 
@@ -14,11 +13,15 @@ class DashboardScreen extends StatelessWidget {
         title: const Text('Dashboard'),
       ),
       drawer: const AppDrawer(),
-      body: const Center(
+      body: Center(
         child: SectionCard(
           title: 'Exercises',
           icon: Icons.fitness_center,
-          onTap: null,
+          
+          // --- هذا هو الإصلاح ---
+          // بدلاً من null، نعطيه دالة فارغة
+          onTap: () {}, 
+
         ),
       ),
     );
