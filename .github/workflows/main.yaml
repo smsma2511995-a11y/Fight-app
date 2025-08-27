@@ -1,5 +1,5 @@
-# اسم سير العمل: خطة التطهير النهائية
-name: The Ultimate Clean Slate Build
+# اسم سير العمل: عملية "الجراحة" النهائية
+name: The Surgical Fix - Final Build
 
 on:
   push:
@@ -8,12 +8,12 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-and-release:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       # الخطوة 1: تنزيل الكود
-      - name: Checkout Your Code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       # الخطوة 2: إعداد فلاتر
@@ -22,36 +22,20 @@ jobs:
         with:
           channel: 'stable'
           cache: true
+      
+      # الخطوة 3: (هذه هي الجراحة)
+      # حذف مجلد android القديم والفاسد بالقوة
+      - name: SURGICAL STEP - Remove Old Android Folder
+        run: rm -rf android
 
-      # الخطوة 3: إنشاء هيكل مشروع نظيف
-      - name: Recreate Project Structure
-        run: |
-          # حفظ الملفات الأساسية
-          mkdir safe_place
-          mv lib safe_place/
-          mv pubspec.yaml safe_place/
-          if [ -d "assets" ]; then mv assets safe_place/; fi
-          
-          # إنشاء مشروع فلاتر جديد ونظيف
-          flutter create .
-          
-          # حذف المجلدات المؤقتة من المشروع الجديد
-          rm -rf lib
-          
-          # استعادة ملفاتك الأساسية
-          mv safe_place/* .
-          rm -rf safe_place
+      # الخطوة 4: (إعادة البناء)
+      # إجبار فلاتر على إنشاء مجلد android جديد وسليم
+      - name: Rebuild Clean Android Folder
+        run: flutter create --platforms=android .
 
-      # الخطوة 4: (هذه هي الخطوة الحاسمة)
-      # ترقية فلاتر وتحديث كل الحزم إلى أحدث إصدار متوافق
-      - name: Upgrade Dependencies to Latest Versions
-        run: |
-          flutter upgrade
-          flutter pub upgrade --major-versions
-
-      # الخطوة 5: إعطاء صلاحية التنفيذ لملف Gradle
-      - name: Grant Execute Permission for Gradlew
-        run: chmod +x android/gradlew
+      # الخطوة 5: تحميل الحزم للمشروع الجديد
+      - name: Get Dependencies
+        run: flutter pub get
 
       # الخطوة 6: بناء نسخة الأندرويد النهائية
       - name: Build Android App Bundle
@@ -63,4 +47,3 @@ jobs:
         with:
           name: release-bundle
           path: build/app/outputs/bundle/release/app-release.aab
-
