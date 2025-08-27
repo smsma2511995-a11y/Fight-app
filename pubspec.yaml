@@ -1,3 +1,4 @@
+name: fight_app # <-- تم إصلاح السطر المفقود هنا
 description: A complete offline martial arts training app with exercises, diet plans, and a smart coach.
 publish_to: 'none' 
 version: 1.0.0+1
