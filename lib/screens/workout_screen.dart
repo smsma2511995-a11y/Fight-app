@@ -1,7 +1,9 @@
-import 'dart:async'; // لاستخدام المؤقت
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:percent_indicator/circular_percent_indicator.dart'; // للعداد الدائري
+import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:fight_app/models/exercise_model.dart';
+import 'package:just_audio/just_audio.dart'; // لاستيراد مشغل الصوت
+import 'package:flutter_tts/flutter_tts.dart'; // لاستيراد محرك النطق
 
 class WorkoutScreen extends StatefulWidget {
   final MartialArtsExercise exercise;
@@ -15,31 +17,60 @@ class WorkoutScreen extends StatefulWidget {
 class _WorkoutScreenState extends State<WorkoutScreen> {
   late Timer _timer;
   int _currentSeconds = 0;
+  
+  // تهيئة مشغل الصوت ومحرك النطق
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  final FlutterTts _flutterTts = FlutterTts();
 
   @override
   void initState() {
     super.initState();
-    // ابدأ العداد فور فتح الشاشة
+    _setupSound();
     startTimer();
   }
 
   @override
   void dispose() {
-    // تأكد من إلغاء المؤقت عند إغلاق الشاشة لمنع تسريب الذاكرة
     _timer.cancel();
+    _audioPlayer.dispose(); // تأكد من إغلاق مشغل الصوت
     super.dispose();
   }
 
+  // دالة لتجهيز الأصوات والنطق
+  Future<void> _setupSound() async {
+    // تجهيز محرك النطق
+    await _flutterTts.setLanguage("en-US"); // نطق اسم التمرين بالإنجليزية
+    await _flutterTts.setSpeechRate(0.5);
+    await _flutterTts.setPitch(1.0);
+  }
+
+  // دالة لتشغيل صوت من الإنترنت
+  Future<void> _playSound(String url) async {
+    try {
+      await _audioPlayer.setUrl(url);
+      _audioPlayer.play();
+    } catch (e) {
+      print("Error playing sound: $e");
+    }
+  }
+  
   void startTimer() {
-    _currentSeconds = widget.exercise.duration; // ابدأ من مدة التمرين
+    _currentSeconds = widget.exercise.duration;
+    
+    // --- هذا هو التعديل الرئيسي ---
+    // نطق اسم التمرين وتشغيل صوت البداية
+    _flutterTts.speak(widget.exercise.nameEn);
+    _playSound("https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg");
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_currentSeconds > 0) {
         setState(() {
           _currentSeconds--;
         });
       } else {
-        // عندما ينتهي الوقت، أوقف المؤقت
         timer.cancel();
+        // تشغيل صوت النهاية
+        _playSound("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
         _showCompletionDialog();
       }
     });
@@ -56,8 +87,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             TextButton(
               child: const Text("إغلاق"),
               onPressed: () {
-                Navigator.of(context).pop(); // يغلق الحوار
-                Navigator.of(context).pop(); // يعود إلى شاشة التفاصيل
+                Navigator.of(context).pop(); 
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -68,11 +99,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   
   @override
   Widget build(BuildContext context) {
-    // حساب النسبة المئوية للعداد الدائري
     double percent = _currentSeconds / widget.exercise.duration;
 
     return Scaffold(
-      backgroundColor: Colors.black, // خلفية سوداء للتركيز
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Center(
           child: Column(
@@ -80,16 +110,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             children: <Widget>[
               Text(
                 widget.exercise.nameAr,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 30),
 
-              // صورة GIF كبيرة
               ClipRRect(
                 borderRadius: BorderRadius.circular(15.0),
                 child: Image.network(
@@ -101,23 +126,17 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               ),
               const SizedBox(height: 50),
 
-              // العداد الدائري
               CircularPercentIndicator(
                 radius: 100.0,
                 lineWidth: 15.0,
                 percent: percent,
                 center: Text(
                   "$_currentSeconds",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 50.0,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(color: Colors.white, fontSize: 50.0, fontWeight: FontWeight.bold),
                 ),
                 progressColor: Colors.red.shade700,
                 backgroundColor: Colors.grey.shade800,
                 circularStrokeCap: CircularStrokeCap.round,
-                animation: false, // لا نريد حركة للعداد نفسه
               ),
               const SizedBox(height: 30),
 
@@ -130,7 +149,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                 ),
                 onPressed: () {
-                  // العودة إلى الشاشة السابقة
                   Navigator.of(context).pop();
                 },
               ),
@@ -141,4 +159,3 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     );
   }
 }
-                  
