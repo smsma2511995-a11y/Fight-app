@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package.fight_app/models/exercise_model.dart';
+import 'package:fight_app/models/exercise_model.dart';
+import 'package:fight_app/screens/workout_screen.dart'; // استيراد الشاشة الجديدة
 
 class ExerciseDetailScreen extends StatelessWidget {
   final MartialArtsExercise exercise;
@@ -20,32 +21,19 @@ class ExerciseDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            
-            // --- تم التعديل هنا ليعرض صورة GIF من الإنترنت ---
             ClipRRect(
               borderRadius: BorderRadius.circular(15.0),
-              child: Image.network( // <-- يستخدم Image.network لتحميل الصور من رابط
-                exercise.gifUrl,    // <-- يستخدم خاصية gifUrl الجديدة
+              child: Image.network(
+                exercise.gifUrl,
                 height: 250,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                // هذا يظهر أثناء تحميل الصورة
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    height: 250,
-                    color: Colors.grey[800],
-                    alignment: Alignment.center,
-                    child: const CircularProgressIndicator(),
-                  );
-                },
-                // هذا يظهر في حالة فشل التحميل
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
                     height: 250,
                     color: Colors.grey[800],
                     alignment: Alignment.center,
-                    child: const Icon(Icons.error, color: Colors.white, size: 50),
+                    child: const Text('لم يتم العثور على الصورة', style: TextStyle(color: Colors.white)),
                   );
                 },
               ),
@@ -54,17 +42,11 @@ class ExerciseDetailScreen extends StatelessWidget {
 
             Text(
               exercise.nameAr,
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             Text(
               exercise.nameEn,
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey[400],
-              ),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[400]),
             ),
             const Divider(height: 30, thickness: 1),
 
@@ -75,13 +57,34 @@ class ExerciseDetailScreen extends StatelessWidget {
             _buildDetailRow('المعدات', exercise.equipment),
             const SizedBox(height: 10),
             _buildDetailRow('العضلات المستهدفة', exercise.targetMuscles.join('، ')),
+
+            // --- هذا هو الزر الجديد ---
+            const SizedBox(height: 30),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.play_arrow),
+                label: const Text("ابدأ التمرين"),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  textStyle: const TextStyle(fontSize: 18, fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => WorkoutScreen(exercise: exercise),
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  // دالة مساعدة لبناء صفوف التفاصيل بشكل منسق
   Widget _buildDetailRow(String title, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -90,10 +93,7 @@ class ExerciseDetailScreen extends StatelessWidget {
         children: [
           Text(
             '$title: ',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           Expanded(
             child: Text(
