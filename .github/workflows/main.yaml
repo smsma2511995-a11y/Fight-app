@@ -1,5 +1,5 @@
-# اسم سير العمل: عملية "الجراحة" البسيطة والنهائية
-name: The Simple Surgical Fix - Final Build
+# اسم سير العمل: بناء AAB و APK
+name: Build AAB and APK
 
 on:
   push:
@@ -33,13 +33,20 @@ jobs:
       - name: Get Dependencies
         run: flutter pub get
 
-      # الخطوة 6: بناء نسخة الأندرويد النهائية
-      - name: Build Android App Bundle
+      # --- هذا هو التعديل ---
+      # الخطوة 6: بناء كلا النوعين (AAB و APK)
+      - name: Build Android App Bundle (AAB)
         run: flutter build appbundle --release
+        
+      - name: Build Android APK
+        run: flutter build apk --release
 
-      # الخطوة 7: رفع الملف الناتج
-      - name: Upload Release Artifact
+      # الخطوة 7: رفع كلا الملفين الناتجين
+      - name: Upload Release Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: release-bundle
-          path: build/app/outputs/bundle/release/app-release.aab
+          name: release-files
+          path: |
+            build/app/outputs/bundle/release/app-release.aab
+            build/app/outputs/flutter-apk/app-release.apk
+
