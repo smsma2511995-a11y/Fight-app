@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-// استيراد قائمة التمارين التي جهزناها
 import 'package:fight_app/data/exercises_seed.dart';
-// استيراد "بطاقة التعريف" الخاصة بالتمرين
 import 'package:fight_app/models/exercise_model.dart';
+// استيراد الشاشة الجديدة التي أنشأناها للتو
+import 'package:fight_app/screens/exercise_detail_screen.dart'; 
 
 class ExercisesScreen extends StatelessWidget {
   const ExercisesScreen({super.key});
@@ -15,31 +15,31 @@ class ExercisesScreen extends StatelessWidget {
         title: const Text('قائمة التمارين'),
       ),
       body: ListView.builder(
-        // عدد العناصر في القائمة هو نفس عدد التمارين في قائمتنا
         itemCount: allExercises.length,
-        // builder هو الذي يقوم ببناء كل عنصر في القائمة
         itemBuilder: (BuildContext context, int index) {
-          // الحصول على التمرين الحالي من القائمة
           final MartialArtsExercise exercise = allExercises[index];
 
-          // استخدام ListTile لعرض كل تمرين بشكل جميل
           return Card(
             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: ListTile(
-              // الأيقونة على اليسار
               leading: Icon(Icons.fitness_center, color: Colors.red[700]),
-              // عنوان التمرين
               title: Text(
                 exercise.nameAr,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              // معلومات إضافية تحت العنوان
               subtitle: Text('${exercise.category} - ${exercise.difficulty}'),
-              // أيقونة السهم على اليمين
               trailing: const Icon(Icons.arrow_forward_ios),
+
+              // --- هذا هو التعديل الوحيد ---
+              // الآن عند الضغط، سينتقل المستخدم إلى شاشة التفاصيل
+              // وسيرسل معه بيانات التمرين الذي تم الضغط عليه
               onTap: () {
-                // هنا سنضيف لاحقًا الكود لعرض تفاصيل التمرين
-                print('Tapped on: ${exercise.nameAr}');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ExerciseDetailScreen(exercise: exercise),
+                  ),
+                );
               },
             ),
           );
