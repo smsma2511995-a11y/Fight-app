@@ -1,4 +1,5 @@
 // هذا الملف يحتوي على تعريف كلاس التمرين وقائمة التمارين الكاملة
+import 'package:fight_app/models/exercise_model.dart';
 
 class MartialArtsExercise {
   final int id;
