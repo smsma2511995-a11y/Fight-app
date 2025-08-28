@@ -1,10 +1,12 @@
+// هذا الملف هو "بطاقة التعريف" لكل تمرين.
+
 class MartialArtsExercise {
   final int id;
   final String nameAr;
   final String nameEn;
   final String category;
   final String difficulty;
-  final String gifUrl; // <--- تم تغيير الاسم هنا
+  final String gifUrl; // <--- تم التغيير هنا ليعكس أنه رابط
   final int duration;
   final int calories;
   final List<String> targetMuscles;
