@@ -1,4 +1,4 @@
-name: fight_app # <-- تم إصلاح السطر المفقود هنا
+name: fight_app
 description: A complete offline martial arts training app with exercises, diet plans, and a smart coach.
 publish_to: 'none' 
 version: 1.0.0+1
@@ -33,18 +33,23 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # --- تم تعطيل هذا القسم مؤقتًا لأنه غير موجود في مشروعك ---
-  # assets:
-  #   - assets/data/
-  #   - assets/images/
-  #   - assets/images/karate/
-  #   - assets/sounds/
-  #   - assets/fonts/
+  # --- هذا هو التعديل الحاسم ---
+  # تم تفعيل هذا القسم الآن. تأكد من أن المسافات البادئة صحيحة.
+  assets:
+    - assets/data/
+    - assets/gifs/karate/
+    - assets/gifs/taekwondo/
+    - assets/gifs/boxing/
+    - assets/gifs/kungfu/
+    - assets/gifs/jiujitsu/
+    - assets/gifs/weapons/
+    - assets/gifs/fitness/
+    - assets/sounds/
+    - assets/fonts/
 
-  # --- وتم تعطيل هذا القسم أيضًا ---
-  # fonts:
-  #   - family: Cairo
-  #     fonts:
-  #       - asset: assets/fonts/Cairo-Regular.ttf
-  #       - asset: assets/fonts/Cairo-Bold.ttf
-  #         weight: 700
+  fonts:
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/Cairo-Regular.ttf
+        - asset: assets/fonts/Cairo-Bold.ttf
+          weight: 700
