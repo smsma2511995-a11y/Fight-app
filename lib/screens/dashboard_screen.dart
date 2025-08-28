@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart';
+// --- تم التأكد من وجود كل أسطر import الضرورية ---
+import 'package:flutter/material.dart'; // <--- السطر الأهم
 
+// تأكد من أن هذه الملفات موجودة في مشروعك بالأسماء الصحيحة
 import 'package:fight_app/widgets/app_drawer.dart';
 import 'package:fight_app/widgets/section_card.dart';
-
 import 'package:fight_app/screens/exercises_screen.dart';
-import 'package:fight_app/screens/progress_screen.dart'; // تم التأكد من استيراد الشاشة الصحيحة
+import 'package:fight_app/screens/progress_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -39,7 +40,7 @@ class DashboardScreen extends StatelessWidget {
             title: 'خطط التغذية',
             icon: Icons.restaurant_menu,
             onTap: () {
-              // هذه الشاشة التالية التي سنبنيها
+              // سيتم بناء هذه الشاشة لاحقًا
               print("Diet card tapped");
             },
           ),
@@ -47,16 +48,13 @@ class DashboardScreen extends StatelessWidget {
             title: 'المدرب الذكي',
             icon: Icons.lightbulb_outline,
             onTap: () {
-              // وهذه أيضًا
+              // سيتم بناء هذه الشاشة لاحقًا
               print("Coach card tapped");
             },
           ),
           SectionCard(
             title: 'تتبع التقدم',
             icon: Icons.show_chart,
-            
-            // --- هذا هو التعديل الوحيد ---
-            // الآن عند الضغط، سينتقل المستخدم إلى شاشة التقدم الجديدة والجميلة
             onTap: () {
               Navigator.push(
                 context,
