@@ -33,23 +33,23 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # --- هذا هو التعديل الحاسم ---
-  # تم تفعيل هذا القسم الآن. تأكد من أن المسافات البادئة صحيحة.
-  assets:
-    - assets/data/
-    - assets/gifs/karate/
-    - assets/gifs/taekwondo/
-    - assets/gifs/boxing/
-    - assets/gifs/kungfu/
-    - assets/gifs/jiujitsu/
-    - assets/gifs/weapons/
-    - assets/gifs/fitness/
-    - assets/sounds/
-    - assets/fonts/
+  # --- تم تعطيل هذا القسم مؤقتًا لأننا لا نستخدم ملفات محلية حاليًا ---
+  # assets:
+  #   - assets/data/
+  #   - assets/gifs/karate/
+  #   - assets/gifs/taekwondo/
+  #   - assets/gifs/boxing/
+  #   - assets/gifs/kungfu/
+  #   - assets/gifs/jiujitsu/
+  #   - assets/gifs/weapons/
+  #   - assets/gifs/fitness/
+  #   - assets/sounds/
+  #   - assets/fonts/
 
-  fonts:
-    - family: Cairo
-      fonts:
-        - asset: assets/fonts/Cairo-Regular.ttf
-        - asset: assets/fonts/Cairo-Bold.ttf
-          weight: 700
+  # --- وتم تعطيل هذا القسم أيضًا ---
+  # fonts:
+  #   - family: Cairo
+  #     fonts:
+  #       - asset: assets/fonts/Cairo-Regular.ttf
+  #       - asset: assets/fonts/Cairo-Bold.ttf
+  #         weight: 700
