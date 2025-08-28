@@ -1,8 +1,7 @@
-// --- تم إصلاح كل شيء هنا ---
-// تم إضافة أسطر import الضرورية
+// --- تم التأكد من وجود كل أسطر import الضرورية في الأعلى ---
 
 import 'dart:async';
-import 'package:flutter/material.dart'; // <--- هذا هو السطر الأهم المفقود
+import 'package:flutter/material.dart'; // <--- هذا هو السطر الحاسم الذي يحل كل شيء
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:fight_app/models/exercise_model.dart';
 import 'package:fight_app/data/database_helper.dart';
@@ -56,7 +55,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     _playSound("https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg");
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_currentSeconds > 0) {
-        setState(() => _currentSeconds--);
+        if (mounted) {
+          setState(() => _currentSeconds--);
+        }
       } else {
         timer.cancel();
         _playSound("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
@@ -66,7 +67,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           widget.exercise.duration,
           widget.exercise.calories,
         );
-        _showCompletionDialog();
+        if (mounted) {
+          _showCompletionDialog();
+        }
       }
     });
   }
@@ -92,7 +95,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   
   @override
   Widget build(BuildContext context) {
-    // يجب أن تكون هذه الدالة داخل build
     double percent = _currentSeconds > 0 ? _currentSeconds / widget.exercise.duration : 0;
     
     return Scaffold(
