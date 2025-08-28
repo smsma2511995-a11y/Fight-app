@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:fight_app/models/exercise_model.dart';
+import 'package.fight_app/models/exercise_model.dart';
 
 class ExerciseDetailScreen extends StatelessWidget {
-  // هذه الشاشة ستستقبل "بطاقة تعريف" التمرين الذي تم الضغط عليه
   final MartialArtsExercise exercise;
 
   const ExerciseDetailScreen({
@@ -14,7 +13,6 @@ class ExerciseDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // عنوان الصفحة هو اسم التمرين بالعربي
         title: Text(exercise.nameAr),
       ),
       body: SingleChildScrollView(
@@ -22,24 +20,38 @@ class ExerciseDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            // --- عرض صورة الـ GIF ---
-            // ملاحظة: هذا سيعمل فقط بعد أن تضيف مجلد assets/gifs إلى مشروعك
-            // في الوقت الحالي، سنضع حاوية مؤقتة
-            Container(
-              height: 250,
-              width: double.infinity,
-              color: Colors.grey[800],
-              alignment: Alignment.center,
-              child: const Text(
-                'مكان عرض صورة GIF',
-                style: TextStyle(color: Colors.white, fontSize: 18),
+            
+            // --- تم التعديل هنا ليعرض صورة GIF من الإنترنت ---
+            ClipRRect(
+              borderRadius: BorderRadius.circular(15.0),
+              child: Image.network( // <-- يستخدم Image.network لتحميل الصور من رابط
+                exercise.gifUrl,    // <-- يستخدم خاصية gifUrl الجديدة
+                height: 250,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                // هذا يظهر أثناء تحميل الصورة
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    height: 250,
+                    color: Colors.grey[800],
+                    alignment: Alignment.center,
+                    child: const CircularProgressIndicator(),
+                  );
+                },
+                // هذا يظهر في حالة فشل التحميل
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 250,
+                    color: Colors.grey[800],
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.error, color: Colors.white, size: 50),
+                  );
+                },
               ),
-              // يمكنك تفعيل السطر التالي بعد إضافة الصور
-              // child: Image.asset(exercise.gifPath, fit: BoxFit.cover),
             ),
             const SizedBox(height: 20),
 
-            // --- عرض اسم التمرين ---
             Text(
               exercise.nameAr,
               style: const TextStyle(
@@ -56,7 +68,6 @@ class ExerciseDetailScreen extends StatelessWidget {
             ),
             const Divider(height: 30, thickness: 1),
 
-            // --- عرض تفاصيل التمرين ---
             _buildDetailRow('الفئة', exercise.category),
             _buildDetailRow('المستوى', exercise.difficulty),
             _buildDetailRow('المدة', '${exercise.duration} ثانية'),
