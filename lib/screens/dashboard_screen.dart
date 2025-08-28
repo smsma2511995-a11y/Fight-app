@@ -4,7 +4,7 @@ import 'package:fight_app/widgets/app_drawer.dart';
 import 'package:fight_app/widgets/section_card.dart';
 
 import 'package:fight_app/screens/exercises_screen.dart';
-import 'package:fight_app/screens/progress_screen.dart'; // استيراد الشاشة الجديدة
+import 'package:fight_app/screens/progress_screen.dart'; // تم التأكد من استيراد الشاشة الصحيحة
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -13,7 +13,7 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('fight_app'), // تم التعديل لاسم التطبيق الصحيح
+        title: const Text('fight_app'),
         centerTitle: true,
       ),
       
@@ -39,7 +39,7 @@ class DashboardScreen extends StatelessWidget {
             title: 'خطط التغذية',
             icon: Icons.restaurant_menu,
             onTap: () {
-              // سنبني هذه الشاشة لاحقًا
+              // هذه الشاشة التالية التي سنبنيها
               print("Diet card tapped");
             },
           ),
@@ -47,7 +47,7 @@ class DashboardScreen extends StatelessWidget {
             title: 'المدرب الذكي',
             icon: Icons.lightbulb_outline,
             onTap: () {
-              // سنبني هذه الشاشة لاحقًا
+              // وهذه أيضًا
               print("Coach card tapped");
             },
           ),
@@ -56,7 +56,7 @@ class DashboardScreen extends StatelessWidget {
             icon: Icons.show_chart,
             
             // --- هذا هو التعديل الوحيد ---
-            // الآن عند الضغط، سينتقل المستخدم إلى شاشة تتبع التقدم
+            // الآن عند الضغط، سينتقل المستخدم إلى شاشة التقدم الجديدة والجميلة
             onTap: () {
               Navigator.push(
                 context,
