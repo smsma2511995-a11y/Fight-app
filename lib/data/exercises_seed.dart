@@ -1,4 +1,5 @@
 // ignore_for_file: prefer_const_constructors
+import 'package:fight_app/models/exercise_model.dart';
 
 class Exercise {
   final String name;
