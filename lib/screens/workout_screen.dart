@@ -1,10 +1,13 @@
+// --- تم إصلاح كل شيء هنا ---
+// تم إضافة أسطر import الضرورية
+
 import 'dart:async';
-import 'package.flutter/material.dart';
-import 'package.percent_indicator/circular_percent_indicator.dart';
-import 'package.fight_app/models/exercise_model.dart';
-import 'package.fight_app/data/database_helper.dart'; // استيراد مدير قاعدة البيانات
-import 'package.just_audio/just_audio.dart';
-import 'package.flutter_tts/flutter_tts.dart';
+import 'package:flutter/material.dart'; // <--- هذا هو السطر الأهم المفقود
+import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:fight_app/models/exercise_model.dart';
+import 'package:fight_app/data/database_helper.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 class WorkoutScreen extends StatefulWidget {
   final MartialArtsExercise exercise;
@@ -57,16 +60,12 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       } else {
         timer.cancel();
         _playSound("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
-        
-        // --- هذا هو التعديل الرئيسي ---
-        // تسجيل التمرين المكتمل في قاعدة البيانات
         DatabaseHelper().logExercise(
           widget.exercise.id,
           widget.exercise.nameAr,
           widget.exercise.duration,
           widget.exercise.calories,
         );
-
         _showCompletionDialog();
       }
     });
@@ -93,7 +92,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   
   @override
   Widget build(BuildContext context) {
-    double percent = _currentSeconds / widget.exercise.duration;
+    // يجب أن تكون هذه الدالة داخل build
+    double percent = _currentSeconds > 0 ? _currentSeconds / widget.exercise.duration : 0;
+    
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
