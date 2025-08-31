@@ -18,3 +18,11 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
+
+Future<List<Exercise>> loadExercises() async {
+  final data = await rootBundle.loadString('assets/data/exercises.json');
+  final List<dynamic> jsonResult = json.decode(data);
+  return jsonResult.map((e) => Exercise.fromJson(e)).toList();
+}
