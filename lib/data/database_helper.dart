@@ -11,52 +11,69 @@ class DatabaseHelper {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDb();
+    _database = await _initDB();
     return _database!;
   }
 
-  Future<Database> _initDb() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'fight_app.db');
-
+  Future<Database> _initDB() async {
+    final path = join(await getDatabasesPath(), 'fight_app.db');
     return await openDatabase(
       path,
       version: 1,
       onCreate: (db, version) async {
         await db.execute('''
-          CREATE TABLE completed_exercises (
+          CREATE TABLE exercises(
+            id INTEGER PRIMARY KEY,
+            name TEXT,
+            description TEXT,
+            category TEXT,
+            calories INTEGER
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE progress(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            exercise_id INTEGER,
-            calories INTEGER,
-            timestamp TEXT
+            exerciseId INTEGER,
+            completedAt TEXT
           )
         ''');
       },
     );
   }
 
-  Future<void> logExercise(MartialArtsExercise exercise) async {
+  Future<int> insertExercise(MartialArtsExercise exercise) async {
     final db = await database;
-    await db.insert(
-      'completed_exercises',
-      {
-        'exercise_id': exercise.id,
-        'calories': exercise.calories,
-        'timestamp': DateTime.now().toIso8601String(),
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    return await db.insert('exercises', exercise.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<MartialArtsExercise>> getAllExercises() async {
+    final db = await database;
+    final maps = await db.query('exercises');
+    return maps.map((e) => MartialArtsExercise.fromMap(e)).toList();
+  }
+
+  Future<void> logExercise(int exerciseId) async {
+    final db = await database;
+    await db.insert('progress', {
+      'exerciseId': exerciseId,
+      'completedAt': DateTime.now().toIso8601String(),
+    });
   }
 
   Future<int> getTotalCompletedExercises() async {
     final db = await database;
-    final result = await db.rawQuery('SELECT COUNT(*) FROM completed_exercises');
+    final result = await db.rawQuery('SELECT COUNT(*) FROM progress');
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
   Future<int> getTotalCaloriesBurned() async {
     final db = await database;
-    final result = await db.rawQuery('SELECT SUM(calories) FROM completed_exercises');
+    final result = await db.rawQuery('''
+      SELECT SUM(e.calories)
+      FROM progress p
+      INNER JOIN exercises e ON p.exerciseId = e.id
+    ''');
     return Sqflite.firstIntValue(result) ?? 0;
   }
 }
