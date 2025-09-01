@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
-
-// --- هذا هو الإصلاح: تم استخدام ":" بدلاً من "." ---
 import 'package:fight_app/screens/dashboard_screen.dart'; 
-
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/material.dart';
+import 'data/exercises_seed.dart';
+import 'models/exercise_model.dart';
+import 'screens/dashboard_screen.dart';
 void main() {
   runApp(const MyApp());
 }
