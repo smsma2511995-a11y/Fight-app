@@ -1,60 +1,62 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import '../models/exercise_model.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   factory DatabaseHelper() => _instance;
+  DatabaseHelper._internal();
 
   static Database? _database;
 
-  DatabaseHelper._internal();
-
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDatabase();
+    _database = await _initDb();
     return _database!;
   }
 
-  Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'fight_app.db');
+  Future<Database> _initDb() async {
+    final dbPath = await getDatabasesPath();
+    final path = join(dbPath, 'fight_app.db');
+
     return await openDatabase(
       path,
       version: 1,
-      onCreate: _onCreate,
+      onCreate: (db, version) async {
+        await db.execute('''
+          CREATE TABLE completed_exercises (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            exercise_id INTEGER,
+            calories INTEGER,
+            timestamp TEXT
+          )
+        ''');
+      },
     );
   }
 
-  Future<void> _onCreate(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE exercises(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        description TEXT,
-        imageUrl TEXT,
-        category TEXT
-      )
-    ''');
+  Future<void> logExercise(MartialArtsExercise exercise) async {
+    final db = await database;
+    await db.insert(
+      'completed_exercises',
+      {
+        'exercise_id': exercise.id,
+        'calories': exercise.calories,
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
-  Future<int> insertExercise(Map<String, dynamic> exercise) async {
+  Future<int> getTotalCompletedExercises() async {
     final db = await database;
-    return await db.insert('exercises', exercise,
-        conflictAlgorithm: ConflictAlgorithm.replace);
+    final result = await db.rawQuery('SELECT COUNT(*) FROM completed_exercises');
+    return Sqflite.firstIntValue(result) ?? 0;
   }
 
-  Future<List<Map<String, dynamic>>> getExercises() async {
+  Future<int> getTotalCaloriesBurned() async {
     final db = await database;
-    return await db.query('exercises');
-  }
-
-  Future<int> getExerciseCount() async {
-    final db = await database;
-    final result = await db.rawQuery('SELECT COUNT(*) FROM exercises');
-    return result.isNotEmpty ? result.first.values.first as int : 0;
-  }
-
-  Future<void> clearExercises() async {
-    final db = await database;
-    await db.delete('exercises');
+    final result = await db.rawQuery('SELECT SUM(calories) FROM completed_exercises');
+    return Sqflite.firstIntValue(result) ?? 0;
   }
 }
