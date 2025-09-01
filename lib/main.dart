@@ -1,30 +1,44 @@
-import 'package:fight_app/screens/dashboard_screen.dart'; 
-import 'dart:convert';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/material.dart';
-import 'data/exercises_seed.dart';
+import 'data/database_helper.dart';
 import 'models/exercise_model.dart';
-import 'screens/dashboard_screen.dart';
-void main() {
-  runApp(const MyApp());
+import 'screens/exercises_screen.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final dbHelper = DatabaseHelper();
+
+  // Insert sample exercises once
+  final exercises = [
+    MartialArtsExercise(
+        id: 1,
+        name: "Front Kick",
+        description: "A basic karate front kick",
+        category: "Karate",
+        calories: 20),
+    MartialArtsExercise(
+        id: 2,
+        name: "Throw",
+        description: "Judo shoulder throw",
+        category: "Judo",
+        calories: 35),
+  ];
+
+  for (var ex in exercises) {
+    await dbHelper.insertExercise(ex);
+  }
+
+  runApp(const FightApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class FightApp extends StatelessWidget {
+  const FightApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Fight App',
-      home: const DashboardScreen(),
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: ExercisesScreen(),
     );
   }
-}
-import 'dart:convert';
-import 'package:flutter/services.dart' show rootBundle;
-
-Future<List<Exercise>> loadExercises() async {
-  final data = await rootBundle.loadString('assets/data/exercises.json');
-  final List<dynamic> jsonResult = json.decode(data);
-  return jsonResult.map((e) => Exercise.fromJson(e)).toList();
 }
