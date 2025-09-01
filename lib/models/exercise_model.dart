@@ -1,27 +1,39 @@
-// هذا الملف هو "بطاقة التعريف" لكل تمرين.
-
 class MartialArtsExercise {
   final int id;
-  final String nameAr;
-  final String nameEn;
-  final String category;
-  final String difficulty;
-  final String gifUrl; // <--- تم التغيير هنا ليعكس أنه رابط
-  final int duration;
+  final String name;
+  final String description;
+  final int duration; // بالثواني
   final int calories;
-  final List<String> targetMuscles;
-  final String equipment;
+  final String category; // Karate, Judo, Taekwondo, ...
 
   const MartialArtsExercise({
     required this.id,
-    required this.nameAr,
-    required this.nameEn,
-    required this.category,
-    required this.difficulty,
-    required this.gifUrl, // <--- وهنا أيضًا
+    required this.name,
+    required this.description,
     required this.duration,
     required this.calories,
-    required this.targetMuscles,
-    required this.equipment,
+    required this.category,
   });
+
+  factory MartialArtsExercise.fromJson(Map<String, dynamic> json) {
+    return MartialArtsExercise(
+      id: json['id'],
+      name: json['name'],
+      description: json['description'],
+      duration: json['duration'],
+      calories: json['calories'],
+      category: json['category'],
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'duration': duration,
+      'calories': calories,
+      'category': category,
+    };
+  }
 }
