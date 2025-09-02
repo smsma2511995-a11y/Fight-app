@@ -1,68 +1,70 @@
-// --- تم التأكد من وجود كل أسطر import الضرورية ---
-import 'package:flutter/material.dart'; // <--- السطر الأهم
-
-// تأكد من أن هذه الملفات موجودة في مشروعك بالأسماء الصحيحة
-import 'package:fight_app/widgets/app_drawer.dart';
-import 'package:fight_app/widgets/section_card.dart';
-import 'package:fight_app/screens/exercises_screen.dart';
-import 'package:fight_app/screens/progress_screen.dart';
+import 'package:flutter/material.dart';
+import 'plan_screen.dart';
+import 'workout_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('fight_app'),
+        title: Text("🏋️ تطبيق القتال"),
         centerTitle: true,
+        backgroundColor: Colors.deepPurple,
+        elevation: 0,
       ),
-      
-      drawer: const AppDrawer(),
+      body: Padding(
+        padding: EdgeInsets.all(20),
+        child: GridView.count(
+          crossAxisCount: 2,
+          crossAxisSpacing: 20,
+          mainAxisSpacing: 20,
+          children: [
+            _buildCard(
+              context,
+              title: "📅 خطة التمرين",
+              color: Colors.blueAccent,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => PlanScreen()),
+              ),
+            ),
+            _buildCard(
+              context,
+              title: "🔥 تمرين اليوم",
+              color: Colors.redAccent,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => WorkoutScreen()),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-      body: GridView.count(
-        crossAxisCount: 2,
-        padding: const EdgeInsets.all(16.0),
-        crossAxisSpacing: 16.0,
-        mainAxisSpacing: 16.0,
-        children: <Widget>[
-          SectionCard(
-            title: 'تمارين',
-            icon: Icons.fitness_center,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ExercisesScreen()),
-              );
-            },
+  Widget _buildCard(BuildContext context,
+      {required String title,
+      required Color color,
+      required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 6,
+        color: color,
+        child: Center(
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 20,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          SectionCard(
-            title: 'خطط التغذية',
-            icon: Icons.restaurant_menu,
-            onTap: () {
-              // سيتم بناء هذه الشاشة لاحقًا
-              print("Diet card tapped");
-            },
-          ),
-          SectionCard(
-            title: 'المدرب الذكي',
-            icon: Icons.lightbulb_outline,
-            onTap: () {
-              // سيتم بناء هذه الشاشة لاحقًا
-              print("Coach card tapped");
-            },
-          ),
-          SectionCard(
-            title: 'تتبع التقدم',
-            icon: Icons.show_chart,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ProgressScreen()),
-              );
-            },
-          ),
-        ],
+        ),
       ),
     );
   }
