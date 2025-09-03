@@ -22,9 +22,9 @@ class ExerciseDetailScreen extends StatelessWidget {
               width: double.infinity,
               decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
               child: exercise.gif != null
-                  ? Image.asset(exercise.gif!, fit: BoxFit.cover)
-                  : Center(
-                      child: Icon(Icons.sports_mma_outlined, size: 80, color: Colors.grey[600]),
+                  ? Image.network(exercise.gif!, fit: BoxFit.cover)
+                  : const Center(
+                      child: Icon(Icons.sports_mma_outlined, size: 80, color: Colors.grey),
                     ),
             ),
             const SizedBox(height: 16),
@@ -41,7 +41,10 @@ class ExerciseDetailScreen extends StatelessWidget {
               },
               icon: const Icon(Icons.play_arrow),
               label: const Text('ابدأ التمرين'),
-              style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
             ),
           ],
         ),
