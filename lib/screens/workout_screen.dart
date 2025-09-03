@@ -23,21 +23,18 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   Future<void> _loadMedia() async {
-    // ✅ إذا التمرين فيه فيديو (مسار محلي أو URL)
     if (widget.exercise.video != null) {
       _isVideo = true;
-      // تحميل الفيديو مع cache تلقائي
+      // تحميل الفيديو من الإنترنت مع Cache تلقائي
       final file = await DefaultCacheManager().getSingleFile(widget.exercise.video!);
       _controller = VideoPlayerController.file(file)
         ..initialize().then((_) {
           setState(() {});
           _controller!.play();
         });
-    } 
-    // ✅ إذا التمرين فيه GIF فقط (محلي من assets)
-    else if (widget.exercise.gif != null) {
+    } else if (widget.exercise.gif != null) {
       _isVideo = false;
-      setState(() {}); // GIF ستظهر مباشرة
+      setState(() {}); // GIF سيظهر من الإنترنت
     }
   }
 
@@ -55,7 +52,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // منطقة عرض الفيديو أو GIF
             Container(
               height: 250,
               width: double.infinity,
@@ -68,13 +64,12 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                         )
                       : const Center(child: CircularProgressIndicator()))
                   : widget.exercise.gif != null
-                      ? Image.asset(widget.exercise.gif!, fit: BoxFit.cover)
+                      ? Image.network(widget.exercise.gif!, fit: BoxFit.cover)
                       : const Icon(Icons.sports_mma_outlined, size: 80, color: Colors.grey),
             ),
             const SizedBox(height: 16),
             Text('ابدأ التمرين الآن', style: Theme.of(context).textTheme.headline6),
             const SizedBox(height: 8),
-            // زر تشغيل/إيقاف الفيديو (أو مجرد إظهار GIF)
             ElevatedButton(
               onPressed: () {
                 if (_isVideo && _controller != null) {
