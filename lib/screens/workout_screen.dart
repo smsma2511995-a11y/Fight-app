@@ -1,91 +1,95 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:fight_app/models/exercise_model.dart';
-import 'package:fight_app/data/database_helper.dart';
+import 'package:video_player/video_player.dart';
+import '../models/exercise_model.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 class WorkoutScreen extends StatefulWidget {
-  final MartialArtsExercise exercise;
+  final Exercise exercise;
 
-  const WorkoutScreen({super.key, required this.exercise});
+  const WorkoutScreen({required this.exercise, super.key});
 
   @override
   State<WorkoutScreen> createState() => _WorkoutScreenState();
 }
 
 class _WorkoutScreenState extends State<WorkoutScreen> {
-  static const int exerciseDuration = 60; // دقيقة واحدة (60 ثانية)
-  late int _currentSeconds;
-  Timer? _timer;
-  bool _isCompleted = false;
+  VideoPlayerController? _controller;
+  bool _isVideo = false;
 
   @override
   void initState() {
     super.initState();
-    _currentSeconds = exerciseDuration;
-    _startTimer();
+    _loadMedia();
   }
 
-  void _startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_currentSeconds > 0) {
-        setState(() {
-          _currentSeconds--;
+  Future<void> _loadMedia() async {
+    // ✅ إذا التمرين فيه فيديو (مسار محلي أو URL)
+    if (widget.exercise.video != null) {
+      _isVideo = true;
+      // تحميل الفيديو مع cache تلقائي
+      final file = await DefaultCacheManager().getSingleFile(widget.exercise.video!);
+      _controller = VideoPlayerController.file(file)
+        ..initialize().then((_) {
+          setState(() {});
+          _controller!.play();
         });
-      } else {
-        setState(() {
-          _isCompleted = true;
-        });
-        _timer?.cancel();
-        DatabaseHelper().logExercise(widget.exercise); // حفظ في الداتا بيز
-      }
-    });
+    } 
+    // ✅ إذا التمرين فيه GIF فقط (محلي من assets)
+    else if (widget.exercise.gif != null) {
+      _isVideo = false;
+      setState(() {}); // GIF ستظهر مباشرة
+    }
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    double percent =
-        _currentSeconds > 0 ? _currentSeconds / exerciseDuration : 0;
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.exercise.name),
-      ),
+      appBar: AppBar(title: Text(widget.exercise.name)),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              widget.exercise.name,
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            // منطقة عرض الفيديو أو GIF
+            Container(
+              height: 250,
+              width: double.infinity,
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
+              child: _isVideo
+                  ? (_controller != null && _controller!.value.isInitialized
+                      ? AspectRatio(
+                          aspectRatio: _controller!.value.aspectRatio,
+                          child: VideoPlayer(_controller!),
+                        )
+                      : const Center(child: CircularProgressIndicator()))
+                  : widget.exercise.gif != null
+                      ? Image.asset(widget.exercise.gif!, fit: BoxFit.cover)
+                      : const Icon(Icons.sports_mma_outlined, size: 80, color: Colors.grey),
             ),
-            const SizedBox(height: 20),
-            if (widget.exercise.gifUrl.isNotEmpty)
-              Image.network(widget.exercise.gifUrl, height: 200),
-            const SizedBox(height: 20),
-            LinearProgressIndicator(
-              value: percent,
-              minHeight: 10,
-              backgroundColor: Colors.grey[300],
-              color: Colors.blue,
+            const SizedBox(height: 16),
+            Text('ابدأ التمرين الآن', style: Theme.of(context).textTheme.headline6),
+            const SizedBox(height: 8),
+            // زر تشغيل/إيقاف الفيديو (أو مجرد إظهار GIF)
+            ElevatedButton(
+              onPressed: () {
+                if (_isVideo && _controller != null) {
+                  if (_controller!.value.isPlaying) {
+                    _controller!.pause();
+                  } else {
+                    _controller!.play();
+                  }
+                  setState(() {});
+                }
+              },
+              child: Text(_isVideo
+                  ? (_controller != null && _controller!.value.isPlaying ? 'إيقاف الفيديو' : 'تشغيل الفيديو')
+                  : 'تمرين GIF'),
             ),
-            const SizedBox(height: 20),
-            Text(
-              '$_currentSeconds ثانية متبقية',
-              style: const TextStyle(fontSize: 22),
-            ),
-            const SizedBox(height: 40),
-            if (_isCompleted)
-              const Text(
-                'التمرين انتهى ✔',
-                style: TextStyle(fontSize: 24, color: Colors.green),
-              ),
           ],
         ),
       ),
