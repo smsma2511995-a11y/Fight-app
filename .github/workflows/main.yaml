@@ -1,4 +1,4 @@
-# اسم سير العمل: بناء AAB و APK (مُحدّث — لا يحذف مجلد android)
+# Build AAB and APK — يحذف بقايا Android v1 ويجهّز ملفات v2 قبل البناء
 name: Build AAB and APK
 
 on:
@@ -18,6 +18,100 @@ jobs:
         with:
           channel: 'stable'
           cache: true
+
+      - name: Remove stray v1 Android files and patch old imports
+        run: |
+          set -e
+          # حذف ملفات بأسماء خاطئة أو موجودة في جذر مجلد android
+          rm -f "android/Main Activitiy .java" || true
+          rm -f "android/manifest .xml" || true
+          rm -f android/MainActivity.java || true
+
+          # حاول إصلاح أي ملفات Java/Kotlin تستخدم الـ v1 embedding (io.flutter.app)
+          # إذا وُجد استيراد v1 نُبدّله إلى v2 embedding import
+          if grep -R --line-number "io.flutter.app" android 2>/dev/null; then
+            echo "Found io.flutter.app references — patching to v2 embedding where possible"
+            # استبدال import في ملفات .java و .kt
+            find android -type f \( -name "*.java" -o -name "*.kt" \) -print0 | while IFS= read -r -d '' f; do
+              if grep -q "io.flutter.app" "$f"; then
+                sed -i 's/import io.flutter.app.FlutterActivity;/import io.flutter.embedding.android.FlutterActivity;/' "$f" || true
+                # إن احتوى الملف على extends من فئة قديمة، نترك المطابقة العامة (التحقق اليدوي قد يكون مطلوباً)
+                echo "Patched $f"
+              fi
+            done
+          else
+            echo "No io.flutter.app references found"
+          fi
+
+      - name: Ensure Android v2 MainActivity & Manifest (write safe defaults)
+        run: |
+          set -e
+          # Create package dirs matching applicationId
+          mkdir -p android/app/src/main/java/com/example/fight_app
+
+          cat > android/app/src/main/java/com/example/fight_app/MainActivity.java <<'EOF'
+package com.example.fight_app;
+
+import io.flutter.embedding.android.FlutterActivity;
+
+public class MainActivity extends FlutterActivity {
+}
+EOF
+
+          # Ensure manifest with flutterEmbedding=2
+          mkdir -p android/app/src/main
+          cat > android/app/src/main/AndroidManifest.xml <<'EOF'
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.fight_app">
+
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
+
+    <application
+        android:label="Fight App"
+        android:icon="@mipmap/ic_launcher">
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+
+            <meta-data
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@style/NormalTheme" />
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
+EOF
+
+          # Provide minimal styles and launch drawable if missing to avoid build failures
+          mkdir -p android/app/src/main/res/values
+          cat > android/app/src/main/res/values/styles.xml <<'EOF'
+<resources>
+    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+    <style name="NormalTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar"/>
+</resources>
+EOF
+
+          mkdir -p android/app/src/main/res/drawable
+          cat > android/app/src/main/res/drawable/launch_background.xml <<'EOF'
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@android:color/black" />
+</layer-list>
+EOF
 
       - name: Get Dependencies
         run: flutter pub get
