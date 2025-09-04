@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:integrated_martial_arts_trainer/data/exercises_seed.dart';
+import '../data/all_exercises.dart';
+import '../models/exercise.dart';
 
 class WorkoutPlayerScreen extends StatefulWidget {
   const WorkoutPlayerScreen({super.key});
@@ -11,9 +12,8 @@ class WorkoutPlayerScreen extends StatefulWidget {
 
 class _WorkoutPlayerScreenState extends State<WorkoutPlayerScreen> {
   int _currentExerciseIndex = 0;
-  // Let's use a sample workout list for demonstration
-  final List<Exercise> _workoutPlan = allExercises.where((ex) => ex.category == "الكاراتيه").take(5).toList();
-  
+  final List<Exercise> _workoutPlan = allExercisesList.where((ex) => ex.category == "كاراتيه" || ex.category == "الكاراتيه").take(5).toList();
+
   Timer? _timer;
   int _secondsRemaining = 0;
   bool _isPaused = true;
@@ -21,14 +21,13 @@ class _WorkoutPlayerScreenState extends State<WorkoutPlayerScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize with the duration of the first exercise
     if (_workoutPlan.isNotEmpty) {
-      _secondsRemaining = _workoutPlan[_currentExerciseIndex].durationSeconds;
+      _secondsRemaining = _workoutPlan[_currentExerciseIndex].durationSeconds ?? 30;
     }
   }
-  
+
   void _startTimer() {
-    if (_workoutPlan.isEmpty) return; // Don't start if there's no plan
+    if (_workoutPlan.isEmpty) return;
     setState(() {
       _isPaused = false;
     });
@@ -38,7 +37,6 @@ class _WorkoutPlayerScreenState extends State<WorkoutPlayerScreen> {
           _secondsRemaining--;
         });
       } else {
-        // Automatically move to the next exercise when timer ends
         _nextExercise();
       }
     });
@@ -50,17 +48,16 @@ class _WorkoutPlayerScreenState extends State<WorkoutPlayerScreen> {
       _isPaused = true;
     });
   }
-  
+
   void _nextExercise() {
     _timer?.cancel();
     if (_currentExerciseIndex < _workoutPlan.length - 1) {
       setState(() {
         _currentExerciseIndex++;
-        _secondsRemaining = _workoutPlan[_currentExerciseIndex].durationSeconds;
+        _secondsRemaining = _workoutPlan[_currentExerciseIndex].durationSeconds ?? 30;
         _isPaused = true;
       });
     } else {
-      // Workout is complete
       _showWorkoutCompleteDialog();
     }
   }
@@ -70,7 +67,7 @@ class _WorkoutPlayerScreenState extends State<WorkoutPlayerScreen> {
       _timer?.cancel();
       setState(() {
         _currentExerciseIndex--;
-        _secondsRemaining = _workoutPlan[_currentExerciseIndex].durationSeconds;
+        _secondsRemaining = _workoutPlan[_currentExerciseIndex].durationSeconds ?? 30;
         _isPaused = true;
       });
     }
@@ -85,7 +82,7 @@ class _WorkoutPlayerScreenState extends State<WorkoutPlayerScreen> {
   void _showWorkoutCompleteDialog() {
     showDialog(
       context: context,
-      barrierDismissible: false, // User must tap button to close
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text("أحسنت صنعاً!"),
@@ -94,8 +91,8 @@ class _WorkoutPlayerScreenState extends State<WorkoutPlayerScreen> {
             TextButton(
               child: const Text("إنهاء"),
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-                Navigator.of(context).pop(); // Go back from the player screen
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -106,22 +103,21 @@ class _WorkoutPlayerScreenState extends State<WorkoutPlayerScreen> {
 
   @override
   void dispose() {
-    // Important: cancel the timer to avoid memory leaks
     _timer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Handle case where workout plan might be empty
     if (_workoutPlan.isEmpty) {
       return Scaffold(
         appBar: AppBar(),
         body: const Center(child: Text("لا توجد تمارين متاحة في هذه الخطة.")),
       );
     }
-    
+
     final currentExercise = _workoutPlan[_currentExerciseIndex];
+    final img = currentExercise.displayImage;
 
     return Scaffold(
       appBar: AppBar(
@@ -138,7 +134,6 @@ class _WorkoutPlayerScreenState extends State<WorkoutPlayerScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // GIF/Image Area
             Expanded(
               flex: 4,
               child: Container(
@@ -148,68 +143,37 @@ class _WorkoutPlayerScreenState extends State<WorkoutPlayerScreen> {
                   color: Colors.black.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Image.asset(
-                  currentExercise.imagePath,
-                  fit: BoxFit.contain,
-                  // Gracefully handle if an image asset is missing
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Icon(Icons.fitness_center, size: 100, color: Colors.grey);
-                  },
-                ),
+                child: img != null
+                    ? Image.network(img, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.fitness_center, size: 100))
+                    : const Icon(Icons.fitness_center, size: 100, color: Colors.grey),
               ),
             ),
             const SizedBox(height: 24),
-
-            // Exercise Name
             Text(
               currentExercise.name,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
-
-            // Timer Display
             Text(
               _formatTime(_secondsRemaining),
-              style: const TextStyle(
-                fontSize: 72,
-                fontWeight: FontWeight.w900,
-                fontFamily: 'monospace',
-              ),
+              style: const TextStyle(fontSize: 72, fontWeight: FontWeight.w900, fontFamily: 'monospace'),
             ),
             const SizedBox(height: 24),
-
-            // Control Buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.skip_previous),
-                  iconSize: 40,
-                  onPressed: _previousExercise,
-                  color: Colors.grey.shade600,
-                ),
-                // Main Play/Pause Button
+                IconButton(icon: const Icon(Icons.skip_previous), iconSize: 40, onPressed: _previousExercise),
                 SizedBox(
                   width: 80,
                   height: 80,
-                  child: IconButton(
-                    icon: Icon(_isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded),
-                    iconSize: 50,
-                    style: IconButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                    ),
+                  child: ElevatedButton(
                     onPressed: _isPaused ? _startTimer : _pauseTimer,
+                    child: Icon(_isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded, size: 40),
+                    style: ElevatedButton.styleFrom(shape: const CircleBorder(), padding: const EdgeInsets.all(8)),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.skip_next),
-                  iconSize: 40,
-                  onPressed: _nextExercise,
-                  color: Colors.grey.shade600,
-                ),
+                IconButton(icon: const Icon(Icons.skip_next), iconSize: 40, onPressed: _nextExercise),
               ],
             )
           ],
