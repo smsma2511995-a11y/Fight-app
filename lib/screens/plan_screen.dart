@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
-import '../services/plan_manager.dart';
 import '../models/exercise_model.dart';
+import '../data/martial_exercises.dart';
 
 class PlanScreen extends StatefulWidget {
-  const PlanScreen({Key? key}) : super(key: key);
-
   @override
-  State<PlanScreen> createState() => _PlanScreenState();
+  _PlanScreenState createState() => _PlanScreenState();
 }
 
 class _PlanScreenState extends State<PlanScreen> {
-  final PlanManager _planManager = PlanManager();
-  late List<List<Exercise>> _weeklyPlan;
+  final Map<int, List<Exercise>> _plan = {}; // اليوم -> التمارين
 
   @override
   void initState() {
@@ -20,67 +17,58 @@ class _PlanScreenState extends State<PlanScreen> {
   }
 
   void _generatePlan() {
-    setState(() {
-      _weeklyPlan = _planManager.generateWeeklyPlan();
-    });
+    _plan.clear();
+    final allExercises = allExercisesList; // من martial_exercises.dart
+    int day = 1;
+
+    for (int i = 0; i < allExercises.length; i += 3) {
+      _plan[day] = allExercises.sublist(
+        i,
+        i + 3 > allExercises.length ? allExercises.length : i + 3,
+      );
+      day++;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text("📅 خطتي التدريبية"),
-        centerTitle: true,
+        title: Text("خطة التمارين"),
         backgroundColor: Colors.deepPurple,
-        elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: () {
+              setState(() {
+                _generatePlan();
+              });
+            },
+          ),
+        ],
       ),
       body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _weeklyPlan.length,
+        itemCount: _plan.length,
         itemBuilder: (context, index) {
-          final dayExercises = _weeklyPlan[index];
+          final day = index + 1;
+          final exercises = _plan[day]!;
+
           return Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            elevation: 4,
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("اليوم ${index + 1}",
-                      style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.deepPurple)),
-                  const SizedBox(height: 8),
-                  ...dayExercises.map((exercise) => Row(
-                        children: [
-                          const Icon(Icons.fitness_center,
-                              color: Colors.deepPurple),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              exercise.nameAr,
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          )
-                        ],
-                      ))
-                ],
-              ),
+            margin: EdgeInsets.all(10),
+            child: ExpansionTile(
+              title: Text("اليوم $day"),
+              children: exercises
+                  .map(
+                    (ex) => ListTile(
+                      leading: Icon(Icons.fitness_center, color: Colors.deepPurple),
+                      title: Text(ex.name),
+                      subtitle: Text(ex.description, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ),
+                  )
+                  .toList(),
             ),
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _generatePlan,
-        label: const Text("تجديد الخطة"),
-        icon: const Icon(Icons.refresh),
-        backgroundColor: Colors.deepPurple,
       ),
     );
   }
