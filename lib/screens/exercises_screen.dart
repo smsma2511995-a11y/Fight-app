@@ -9,7 +9,7 @@ class ExercisesScreen extends StatefulWidget {
 
 class _ExercisesScreenState extends State<ExercisesScreen> {
   final dbHelper = DatabaseHelper();
-  List<MartialArtsExercise> exercises = [];
+  List<Exercise> exercises = [];
 
   @override
   void initState() {
