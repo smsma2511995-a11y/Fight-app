@@ -6,7 +6,6 @@
     <application
         android:label="Fight App"
         android:icon="@mipmap/ic_launcher">
-        <!-- Required for v2 embedding -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
