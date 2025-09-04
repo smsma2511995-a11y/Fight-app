@@ -4,8 +4,12 @@ import 'screens/profile_screen.dart';
 import 'screens/plan_screen.dart';
 import 'screens/workout_screen.dart';
 import 'screens/exercise_library_screen.dart';
+import 'data/database_helper.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Seed DB if it's empty (non-blocking but ensures data exists before user navigates)
+  await DatabaseHelper.instance.seedIfEmpty();
   runApp(MyApp());
 }
 
@@ -20,6 +24,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => MainScreen(),
         '/plan': (context) => PlanScreen(),
+        // Make WorkoutScreen route use default list when no args passed
         '/workout': (context) => WorkoutScreen(),
         '/library': (context) => ExerciseLibraryScreen(),
       },
@@ -27,6 +32,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// MainScreen unchanged
 class MainScreen extends StatefulWidget {
   @override
   _MainScreenState createState() => _MainScreenState();
