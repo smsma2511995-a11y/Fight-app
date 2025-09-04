@@ -3,54 +3,51 @@ import 'package:path/path.dart';
 import '../models/exercise_model.dart';
 
 class DatabaseHelper {
-  static final DatabaseHelper _instance = DatabaseHelper._internal();
+  static final DatabaseHelper instance = DatabaseHelper._();
   static Database? _db;
 
-  factory DatabaseHelper() => _instance;
-  DatabaseHelper._internal();
+  DatabaseHelper._();
 
-  Future<Database> get db async {
+  Future<Database> get database async {
     if (_db != null) return _db!;
-    _db = await _initDb();
+    _db = await _initDB('exercises.db');
     return _db!;
   }
 
-  Future<Database> _initDb() async {
-    String path = join(await getDatabasesPath(), 'exercises.db');
-    return await openDatabase(path, version: 1, onCreate: _onCreate);
-  }
+  Future<Database> _initDB(String filePath) async {
+    final dbPath = await getDatabasesPath();
+    final path = join(dbPath, filePath);
 
-  Future<void> _onCreate(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE exercises (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        description TEXT,
-        videoUrl TEXT,
-        localPath TEXT
-      )
-    ''');
-  }
-
-  Future<int> insertExercise(Exercise exercise) async {
-    final database = await db;
-    return await database.insert('exercises', exercise.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace);
+    return await openDatabase(
+      path,
+      version: 1,
+      onCreate: (db, version) async {
+        await db.execute('''
+          CREATE TABLE exercises (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            description TEXT,
+            videoUrl TEXT,
+            cachedPath TEXT
+          )
+        ''');
+      },
+    );
   }
 
   Future<List<Exercise>> getExercises() async {
-    final database = await db;
-    final List<Map<String, dynamic>> maps = await database.query('exercises');
-    return List.generate(maps.length, (i) => Exercise.fromMap(maps[i]));
+    final db = await database;
+    final result = await db.query('exercises');
+    return result.map((e) => Exercise.fromMap(e)).toList();
   }
 
-  Future<void> updateExercise(Exercise exercise) async {
-    final database = await db;
-    await database.update(
-      'exercises',
-      exercise.toMap(),
-      where: 'id = ?',
-      whereArgs: [exercise.id],
-    );
+  Future<int> insertExercise(Exercise ex) async {
+    final db = await database;
+    return await db.insert('exercises', ex.toMap());
+  }
+
+  Future<void> clear() async {
+    final db = await database;
+    await db.delete('exercises');
   }
 }
