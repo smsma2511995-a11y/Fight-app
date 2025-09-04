@@ -1,17 +1,31 @@
-android {
-    compileSdkVersion 34
-
-    defaultConfig {
-        applicationId "com.example.fight_app"
-        minSdkVersion 21
-        targetSdkVersion 34
-        versionCode 1
-        versionName "1.0.0"
+buildscript {
+    ext.kotlin_version = '1.7.10' // تأكد من استخدام إصدار حديث
+    repositories {
+        google()
+        mavenCentral()
     }
 
-    buildTypes {
-        release {
-            signingConfig signingConfigs.debug
-        }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.3.0' // إصدار مناسب
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(':app')
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }
