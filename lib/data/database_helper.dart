@@ -3,9 +3,11 @@ import 'package:path/path.dart';
 import '../models/exercise.dart';
 
 class DatabaseHelper {
+  // Singleton
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   factory DatabaseHelper() => _instance;
   DatabaseHelper._internal();
+  static DatabaseHelper get instance => _instance;
 
   static Database? _database;
 
@@ -16,23 +18,41 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDB() async {
-    String path = join(await getDatabasesPath(), 'exercises.db');
-    return await openDatabase(path, version: 1, onCreate: (db, version) async {
-      await db.execute('''
-        CREATE TABLE exercises(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT,
-          description TEXT,
-          videoUrl TEXT
-        )
-      ''');
-    });
+    final dbPath = await getDatabasesPath();
+    final path = join(dbPath, 'exercises.db');
+    return await openDatabase(
+      path,
+      version: 1,
+      onCreate: (db, version) async {
+        await db.execute('''
+          CREATE TABLE exercises (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            description TEXT,
+            videoUrl TEXT,
+            image TEXT,
+            imageUrl TEXT,
+            gif TEXT,
+            gifUrl TEXT,
+            imagePath TEXT,
+            category TEXT,
+            duration TEXT,
+            durationSeconds INTEGER,
+            calories INTEGER,
+            type TEXT,
+            value TEXT
+          )
+        ''');
+      },
+    );
   }
 
-  Future<List<Exercise>> getExercises() async {
+  // Backwards-compatible API names
+  Future<List<Exercise>> getExercises() => getAllExercises();
+  Future<List<Exercise>> getAllExercises() async {
     final db = await database;
     final res = await db.query('exercises', orderBy: 'id DESC');
-    return res.map((e) => Exercise.fromMap(e)).toList();
+    return res.map((r) => Exercise.fromMap(r)).toList();
   }
 
   Future<int> insertExercise(Exercise exercise) async {
