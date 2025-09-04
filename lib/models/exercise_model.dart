@@ -1,4 +1,4 @@
-// Unified Exercise model (supports legacy fields used in seed files).
+// Unified Exercise model (supports legacy fields) + compatibility MartialArtsExercise.
 class Exercise {
   int? id;
   String name;
@@ -64,7 +64,7 @@ class Exercise {
       id: map['id'] is int ? map['id'] as int : (map['id'] == null ? null : int.tryParse(map['id'].toString())),
       name: (map['name'] ?? '') as String,
       description: (map['description'] ?? '') as String,
-      videoUrl: (map['videoUrl'] ?? '') as String,
+      videoUrl: (map['videoUrl'] ?? map['video'] ?? '') as String,
       image: map['image'] as String?,
       imageUrl: map['imageUrl'] as String? ?? map['image'] as String?,
       gif: map['gif'] as String?,
@@ -84,5 +84,57 @@ class Exercise {
   // Convenience getter to prefer imageUrl -> image -> gifUrl -> gif -> imagePath
   String? get displayImage {
     return imageUrl ?? image ?? gifUrl ?? gif ?? imagePath;
+  }
+}
+
+/// Backwards-compatible helper class used in many seeds.
+/// Many seed files construct MartialArtsExercise(...) — keep compatibility.
+class MartialArtsExercise {
+  final String name;
+  final String description;
+  final String? imageUrl;
+  final String? gifUrl;
+  final String? videoUrl;
+  final int? durationSeconds;
+  final int? calories;
+  final String? category;
+  final int? duration;
+  final String? image;
+  final String? imagePath;
+  final String? type;
+  final String? value;
+
+  MartialArtsExercise({
+    required this.name,
+    required this.description,
+    this.imageUrl,
+    this.gifUrl,
+    this.videoUrl,
+    this.durationSeconds,
+    this.calories,
+    this.category,
+    this.duration,
+    this.image,
+    this.imagePath,
+    this.type,
+    this.value,
+  });
+
+  Exercise toExercise() {
+    return Exercise(
+      name: name,
+      description: description,
+      videoUrl: videoUrl ?? '',
+      imageUrl: imageUrl ?? gifUrl,
+      gifUrl: gifUrl,
+      image: image,
+      imagePath: imagePath,
+      durationSeconds: durationSeconds,
+      calories: calories,
+      category: category,
+      duration: duration != null ? '${duration!} ثانية' : null,
+      type: type,
+      value: value,
+    );
   }
 }
