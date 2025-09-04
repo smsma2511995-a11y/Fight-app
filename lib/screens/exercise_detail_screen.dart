@@ -1,54 +1,87 @@
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import '../models/exercise_model.dart';
-import 'workout_screen.dart';
+import '../services/tts_service.dart';
 
-class ExerciseDetailScreen extends StatelessWidget {
+class ExerciseDetailScreen extends StatefulWidget {
   final Exercise exercise;
 
-  const ExerciseDetailScreen({required this.exercise, super.key});
+  ExerciseDetailScreen({required this.exercise});
+
+  @override
+  _ExerciseDetailScreenState createState() => _ExerciseDetailScreenState();
+}
+
+class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
+  VideoPlayerController? _controller;
+  final tts = TTSService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVideo();
+  }
+
+  Future<void> _loadVideo() async {
+    try {
+      final file = await DefaultCacheManager().getSingleFile(widget.exercise.videoUrl);
+      _controller = VideoPlayerController.file(file)
+        ..initialize().then((_) {
+          setState(() {});
+        });
+    } catch (e) {
+      print("Video error: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(exercise.name)),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      appBar: AppBar(
+        title: Text(widget.exercise.name),
+        backgroundColor: Colors.deepPurple,
+      ),
+      body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // GIF أو فيديو أو أيقونة افتراضية
-            Container(
-              height: 200,
-              width: double.infinity,
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
-              child: exercise.gif != null
-                  ? Image.network(exercise.gif!, fit: BoxFit.cover)
-                  : const Center(
-                      child: Icon(Icons.sports_mma_outlined, size: 80, color: Colors.grey),
-                    ),
+            _controller != null && _controller!.value.isInitialized
+                ? AspectRatio(
+                    aspectRatio: _controller!.value.aspectRatio,
+                    child: VideoPlayer(_controller!),
+                  )
+                : Center(child: CircularProgressIndicator()),
+
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                widget.exercise.description,
+                style: TextStyle(fontSize: 18),
+              ),
             ),
-            const SizedBox(height: 16),
-            Text('نوع التمرين: ${exercise.type}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Text('العدد / الوقت: ${exercise.value}', style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => WorkoutScreen(exercise: exercise)),
-                );
-              },
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('ابدأ التمرين'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () => tts.speak(widget.exercise.description),
+                icon: Icon(Icons.volume_up),
+                label: Text("تشغيل الوصف صوتيًا"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  foregroundColor: Colors.white,
+                ),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    tts.stop();
+    super.dispose();
   }
 }
