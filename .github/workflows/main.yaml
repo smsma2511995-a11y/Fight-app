@@ -103,6 +103,8 @@ jobs:
 
       - name: Get dependencies
         run: flutter pub get
+        flutter clean
+     flutter build
 
       - name: Build Android App Bundle (AAB)
         run: flutter build appbundle --release
@@ -117,3 +119,4 @@ jobs:
           path: |
             build/app/outputs/bundle/release/app-release.aab
             build/app/outputs/flutter-apk/app-release.apk
+
