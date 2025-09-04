@@ -66,3 +66,18 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.appcompat:appcompat:1.6.1'
 }
+android {
+    compileSdkVersion 33
+    
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 33
+    }
+    
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+            // أو إعدادات التوقيع الخاصة بك
+        }
+    }
+}
