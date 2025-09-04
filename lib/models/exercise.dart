@@ -1,2 +1,2 @@
-// shim: re-export the unified model (some files import ../models/exercise.dart)
+// Legacy shim: keep old imports working.
 export 'exercise_model.dart';
