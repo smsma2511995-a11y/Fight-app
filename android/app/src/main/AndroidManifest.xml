@@ -1,28 +1,17 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.fight_app">
-
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:name="${applicationName}"
-        android:label="Your App"
+        android:name="${applicationName}"   <!-- تغيير من io.flutter.app.FlutterApplication -->
+        android:label="Your App Name"
         android:icon="@mipmap/ic_launcher">
         
-        <!-- إضافة هذه السطر إذا لم يكن موجودا -->
+        <!-- أضف هذا الوسم داخل وسم <application> إذا غير موجود -->
         <meta-data
             android:name="flutterEmbedding"
-            android:value="2" />
+            android:value="2" />  <!-- هذه القيمة ضرورية -->
         
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:launchMode="singleTop"
-            android:theme="@style/LaunchTheme"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-            android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
+        <!-- باقي محتوى الملف -->
     </application>
 </manifest>
+```[citation:1][citation:3]
+
+ appbundle --release
