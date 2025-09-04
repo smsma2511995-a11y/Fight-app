@@ -1,4 +1,3 @@
-# Build AAB and APK — يحذف بقايا Android v1 ويجهّز ملفات v2 قبل البناء
 name: Build AAB and APK
 
 on:
@@ -10,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Flutter
@@ -19,23 +18,20 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Remove stray v1 Android files and patch old imports
+      - name: Clean stray Android v1 files and patch imports
         run: |
           set -e
-          # حذف ملفات بأسماء خاطئة أو موجودة في جذر مجلد android
+          # remove obviously incorrect files (names with spaces)
           rm -f "android/Main Activitiy .java" || true
           rm -f "android/manifest .xml" || true
           rm -f android/MainActivity.java || true
 
-          # حاول إصلاح أي ملفات Java/Kotlin تستخدم الـ v1 embedding (io.flutter.app)
-          # إذا وُجد استيراد v1 نُبدّله إلى v2 embedding import
+          # If there are references to the old v1 embedding, try to patch them to v2 imports.
           if grep -R --line-number "io.flutter.app" android 2>/dev/null; then
-            echo "Found io.flutter.app references — patching to v2 embedding where possible"
-            # استبدال import في ملفات .java و .kt
+            echo "Found io.flutter.app references — patching imports where possible"
             find android -type f \( -name "*.java" -o -name "*.kt" \) -print0 | while IFS= read -r -d '' f; do
               if grep -q "io.flutter.app" "$f"; then
-                sed -i 's/import io.flutter.app.FlutterActivity;/import io.flutter.embedding.android.FlutterActivity;/' "$f" || true
-                # إن احتوى الملف على extends من فئة قديمة، نترك المطابقة العامة (التحقق اليدوي قد يكون مطلوباً)
+                sed -i 's|import io.flutter.app.FlutterActivity;|import io.flutter.embedding.android.FlutterActivity;|g' "$f" || true
                 echo "Patched $f"
               fi
             done
@@ -46,9 +42,7 @@ jobs:
       - name: Ensure Android v2 MainActivity & Manifest (write safe defaults)
         run: |
           set -e
-          # Create package dirs matching applicationId
           mkdir -p android/app/src/main/java/com/example/fight_app
-
           cat > android/app/src/main/java/com/example/fight_app/MainActivity.java <<'EOF'
 package com.example.fight_app;
 
@@ -58,7 +52,6 @@ public class MainActivity extends FlutterActivity {
 }
 EOF
 
-          # Ensure manifest with flutterEmbedding=2
           mkdir -p android/app/src/main
           cat > android/app/src/main/AndroidManifest.xml <<'EOF'
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -95,7 +88,6 @@ EOF
 </manifest>
 EOF
 
-          # Provide minimal styles and launch drawable if missing to avoid build failures
           mkdir -p android/app/src/main/res/values
           cat > android/app/src/main/res/values/styles.xml <<'EOF'
 <resources>
@@ -113,7 +105,7 @@ EOF
 </layer-list>
 EOF
 
-      - name: Get Dependencies
+      - name: Get dependencies
         run: flutter pub get
 
       - name: Build Android App Bundle (AAB)
@@ -122,7 +114,7 @@ EOF
       - name: Build Android APK
         run: flutter build apk --release
 
-      - name: Upload Release Artifacts
+      - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
           name: release-files
