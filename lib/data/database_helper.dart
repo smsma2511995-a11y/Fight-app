@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/exercise.dart';
+import 'all_exercises.dart';
 
 class DatabaseHelper {
   // Singleton
@@ -45,6 +46,18 @@ class DatabaseHelper {
         ''');
       },
     );
+  }
+
+  // Seed DB if empty (called from main)
+  Future<void> seedIfEmpty() async {
+    final cnt = await getExerciseCount();
+    if (cnt > 0) return;
+    final db = await database;
+    final batch = db.batch();
+    for (final ex in allExercisesList) {
+      batch.insert('exercises', ex.toMap());
+    }
+    await batch.commit(noResult: true);
   }
 
   // Backwards-compatible API names
