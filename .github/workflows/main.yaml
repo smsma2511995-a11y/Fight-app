@@ -43,67 +43,63 @@ jobs:
         run: |
           set -e
           mkdir -p android/app/src/main/java/com/example/fight_app
-          cat > android/app/src/main/java/com/example/fight_app/MainActivity.java <<EOF
-package com.example.fight_app;
+          echo "
+          package com.example.fight_app;
 
-import io.flutter.embedding.android.FlutterActivity;
+          import io.flutter.embedding.android.FlutterActivity;
 
-public class MainActivity extends FlutterActivity {
-}
-EOF
+          public class MainActivity extends FlutterActivity {
+          }" > android/app/src/main/java/com/example/fight_app/MainActivity.java
 
           mkdir -p android/app/src/main
-          cat > android/app/src/main/AndroidManifest.xml <<EOF
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.fight_app">
+          echo "
+          <manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"
+              package=\"com.example.fight_app\">
 
-    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
+              <uses-sdk android:minSdkVersion=\"21\" android:targetSdkVersion=\"34\" />
 
-    <application
-        android:label="Fight App"
-        android:icon="@mipmap/ic_launcher">
-        <meta-data
-            android:name="flutterEmbedding"
-            android:value="2" />
+              <application
+                  android:label=\"Fight App\"
+                  android:icon=\"@mipmap/ic_launcher\">
+                  <meta-data
+                      android:name=\"flutterEmbedding\"
+                      android:value=\"2\" />
 
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:launchMode="singleTop"
-            android:theme="@style/LaunchTheme"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-            android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize">
+                  <activity
+                      android:name=\".MainActivity\"
+                      android:exported=\"true\"
+                      android:launchMode=\"singleTop\"
+                      android:theme=\"@style/LaunchTheme\"
+                      android:configChanges=\"orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode\"
+                      android:hardwareAccelerated=\"true\"
+                      android:windowSoftInputMode=\"adjustResize\">
 
-            <meta-data
-                android:name="io.flutter.embedding.android.NormalTheme"
-                android:resource="@style/NormalTheme" />
+                      <meta-data
+                          android:name=\"io.flutter.embedding.android.NormalTheme\"
+                          android:resource=\"@style/NormalTheme\" />
 
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
-    </application>
-</manifest>
-EOF
+                      <intent-filter>
+                          <action android:name=\"android.intent.action.MAIN\"/>
+                          <category android:name=\"android.intent.category.LAUNCHER\"/>
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>" > android/app/src/main/AndroidManifest.xml
 
           mkdir -p android/app/src/main/res/values
-          cat > android/app/src/main/res/values/styles.xml <<EOF
-<resources>
-    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
-        <item name="android:windowBackground">@drawable/launch_background</item>
-    </style>
-    <style name="NormalTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar"/>
-</resources>
-EOF
+          echo "
+          <resources>
+              <style name=\"LaunchTheme\" parent=\"@android:style/Theme.Black.NoTitleBar\">
+                  <item name=\"android:windowBackground\">@drawable/launch_background</item>
+              </style>
+              <style name=\"NormalTheme\" parent=\"Theme.MaterialComponents.DayNight.NoActionBar\"/>
+          </resources>" > android/app/src/main/res/values/styles.xml
 
           mkdir -p android/app/src/main/res/drawable
-          cat > android/app/src/main/res/drawable/launch_background.xml <<EOF
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@android:color/black" />
-</layer-list>
-EOF
+          echo "
+          <layer-list xmlns:android=\"http://schemas.android.com/apk/res/android\">
+              <item android:drawable=\"@android:color/black\" />
+          </layer-list>" > android/app/src/main/res/drawable/launch_background.xml
 
       - name: Get dependencies
         run: flutter pub get
