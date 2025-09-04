@@ -2,7 +2,7 @@ name: Build AAB and APK
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
@@ -15,7 +15,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: stable
           cache: true
 
       - name: Clean stray Android v1 files and patch imports
@@ -43,7 +43,7 @@ jobs:
         run: |
           set -e
           mkdir -p android/app/src/main/java/com/example/fight_app
-          cat > android/app/src/main/java/com/example/fight_app/MainActivity.java <<'EOF'
+          cat > android/app/src/main/java/com/example/fight_app/MainActivity.java <<EOF
 package com.example.fight_app;
 
 import io.flutter.embedding.android.FlutterActivity;
@@ -53,7 +53,7 @@ public class MainActivity extends FlutterActivity {
 EOF
 
           mkdir -p android/app/src/main
-          cat > android/app/src/main/AndroidManifest.xml <<'EOF'
+          cat > android/app/src/main/AndroidManifest.xml <<EOF
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.fight_app">
 
@@ -89,7 +89,7 @@ EOF
 EOF
 
           mkdir -p android/app/src/main/res/values
-          cat > android/app/src/main/res/values/styles.xml <<'EOF'
+          cat > android/app/src/main/res/values/styles.xml <<EOF
 <resources>
     <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
         <item name="android:windowBackground">@drawable/launch_background</item>
@@ -99,7 +99,7 @@ EOF
 EOF
 
           mkdir -p android/app/src/main/res/drawable
-          cat > android/app/src/main/res/drawable/launch_background.xml <<'EOF'
+          cat > android/app/src/main/res/drawable/launch_background.xml <<EOF
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@android:color/black" />
 </layer-list>
