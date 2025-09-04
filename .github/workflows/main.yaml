@@ -5,9 +5,9 @@ on:
     branches: ["main"]
 
 jobs:
-   build:
-     runs-on: ubuntu-latest
-     steps:
+  build:
+    runs-on: ubuntu-latest
+    steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -27,29 +27,20 @@ jobs:
       - name: Clean stray Android v1 files and patch imports
         run: |
           set -euo pipefail
-          # remove obviously incorrect files (names with spaces)
           rm -f "android/Main Activitiy .java" || true
           rm -f "android/manifest .xml" || true
           rm -f android/MainActivity.java || true
 
-          # If there are references to the old v1 embedding, try to patch them to v2 imports.
           if grep -R --line-number "io.flutter.app" android 2>/dev/null; then
-            echo "Found io.flutter.app references — patching imports where possible"
+            echo "Found io.flutter.app references — patching imports"
             find android -type f \( -name "*.java" -o -name "*.kt" \) -print0 | while IFS= read -r -d '' f; do
-              if grep -q "io.flutter.app" "$f"; then
-                sed -i 's|import io.flutter.app.FlutterActivity;|import io.flutter.embedding.android.FlutterActivity;|g' "$f" || true
-                echo "Patched $f"
-              fi
+              sed -i 's|io.flutter.app.FlutterActivity|io.flutter.embedding.android.FlutterActivity|g' "$f" || true
+              echo "Patched $f"
             done
-          else
-            echo "No io.flutter.app references found"
           fi
-          - name: Build Release
-    run: |
-          cd android
-              ./gradlew app:bundleRelease --stacktrace --info
-              - name: Ensure Android v2 MainActivity & Manifest (write safe defaults)
-            run: |
+
+      - name: Ensure Android v2 MainActivity & Manifest
+        run: |
           set -euo pipefail
           mkdir -p android/app/src/main/java/com/example/fight_app
           cat > android/app/src/main/java/com/example/fight_app/MainActivity.java <<'EOF'
@@ -116,15 +107,14 @@ jobs:
 
       - name: Get dependencies
         run: |
-          set -euo pipefail
           flutter clean
           flutter pub get
 
       - name: Build Android App Bundle (AAB)
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --verbose
 
       - name: Build Android APK
-        run: flutter build apk --release
+        run: flutter build apk --release --verbose
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
