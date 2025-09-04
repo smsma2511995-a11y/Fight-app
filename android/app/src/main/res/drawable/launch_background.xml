@@ -1,4 +1,6 @@
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Simple background; you can replace with your drawable -->
-    <item android:drawable="@android:color/black" />
-</layer-list>
+package com.example.fight_app;
+
+import io.flutter.embedding.android.FlutterActivity;
+
+public class MainActivity extends FlutterActivity {
+}
