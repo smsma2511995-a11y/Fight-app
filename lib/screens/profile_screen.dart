@@ -17,9 +17,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _loadStats() async {
     final count = await DatabaseHelper().getExerciseCount();
-    setState(() {
-      _exerciseCount = count;
-    });
+    setState(() { _exerciseCount = count; });
   }
 
   @override
@@ -27,7 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('الملف الشخصي')),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(16),
         child: Column(
           children: [
             CircleAvatar(radius: 50, backgroundColor: Colors.blueAccent, child: Icon(Icons.person, size: 50, color: Colors.white)),
