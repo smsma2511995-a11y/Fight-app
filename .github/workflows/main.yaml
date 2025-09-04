@@ -3,53 +3,34 @@ name: Build AAB and APK
 on:
   push:
     branches: ["main"]
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up JDK
-      uses: actions/setup-java@v3
-      with:
-        java-version: '11'
-        distribution: 'temurin'
-        
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.19.0' # استخدم الإصدار المناسب
-        
-    - name: Install dependencies
-      run: flutter pub get
-      
-    - name: Build App Bundle
-      run: |
-        cd android
-        ./gradlew bundleRelease --stacktrace --info
-jobs:
-  build:
-    runs-on: ubuntu-latest
 
+jobs:
+  build:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4 --info
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: '11'
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.19.0'
           channel: stable
           cache: true
 
       - name: Clean stray Android v1 files and patch imports
         run: |
           set -euo pipefail
-          # remove obviously incorrect files (names with spaces)
           rm -f "android/Main Activitiy .java" || true
           rm -f "android/manifest .xml" || true
           rm -f android/MainActivity.java || true
 
-          # If there are references to the old v1 embedding, try to patch them to v2 imports.
           if grep -R --line-number "io.flutter.app" android 2>/dev/null; then
             echo "Found io.flutter.app references — patching imports where possible"
             find android -type f \( -name "*.java" -o -name "*.kt" \) -print0 | while IFS= read -r -d '' f; do
@@ -67,70 +48,69 @@ jobs:
           set -euo pipefail
           mkdir -p android/app/src/main/java/com/example/fight_app
           cat > android/app/src/main/java/com/example/fight_app/MainActivity.java <<'EOF'
-          package com.example.fight_app;
+package com.example.fight_app;
 
-          import io.flutter.embedding.android.FlutterActivity;
+import io.flutter.embedding.android.FlutterActivity;
 
-          public class MainActivity extends FlutterActivity {
-          }
-          EOF
+public class MainActivity extends FlutterActivity {
+}
+EOF
 
           mkdir -p android/app/src/main
           cat > android/app/src/main/AndroidManifest.xml <<'EOF'
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-              package="com.example.fight_app">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.fight_app">
 
-              <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
 
-              <application
-                  android:label="Fight App"
-                  android:icon="@mipmap/ic_launcher">
-                  <meta-data
-                      android:name="flutterEmbedding"
-                      android:value="2" />
+    <application
+        android:label="Fight App"
+        android:icon="@mipmap/ic_launcher">
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
 
-                  <activity
-                      android:name=".MainActivity"
-                      android:exported="true"
-                      android:launchMode="singleTop"
-                      android:theme="@style/LaunchTheme"
-                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-                      android:hardwareAccelerated="true"
-                      android:windowSoftInputMode="adjustResize">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
 
-                      <meta-data
-                          android:name="io.flutter.embedding.android.NormalTheme"
-                          android:resource="@style/NormalTheme" />
+            <meta-data
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@style/NormalTheme" />
 
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN"/>
-                          <category android:name="android.intent.category.LAUNCHER"/>
-                      </intent-filter>
-                  </activity>
-              </application>
-          </manifest>
-          EOF
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
+EOF
 
           mkdir -p android/app/src/main/res/values
           cat > android/app/src/main/res/values/styles.xml <<'EOF'
-          <resources>
-              <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
-                  <item name="android:windowBackground">@drawable/launch_background</item>
-              </style>
-              <style name="NormalTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar"/>
-          </resources>
-          EOF
+<resources>
+    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+    <style name="NormalTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar"/>
+</resources>
+EOF
 
           mkdir -p android/app/src/main/res/drawable
           cat > android/app/src/main/res/drawable/launch_background.xml <<'EOF'
-          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-              <item android:drawable="@android:color/black" />
-          </layer-list>
-          EOF
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@android:color/black" />
+</layer-list>
+EOF
 
-      - name: Get dependencies
+      - name: Install dependencies
         run: |
-          set -euo pipefail
           flutter clean
           flutter pub get
 
@@ -147,6 +127,3 @@ jobs:
           path: |
             build/app/outputs/bundle/release/app-release.aab
             build/app/outputs/flutter-apk/app-release.apk
-                
-             - name: Build with Gradle
-              run: ./gradlew bundleRelease --stacktrace
