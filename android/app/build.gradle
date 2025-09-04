@@ -1,0 +1,17 @@
+android {
+    compileSdkVersion 34
+
+    defaultConfig {
+        applicationId "com.example.fight_app"
+        minSdkVersion 21
+        targetSdkVersion 34
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+        }
+    }
+}
