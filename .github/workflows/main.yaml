@@ -1,4 +1,4 @@
-# اسم سير العمل: بناء AAB و APK
+# اسم سير العمل: بناء AAB و APK (مُحدّث — لا يحذف مجلد android)
 name: Build AAB and APK
 
 on:
@@ -10,38 +10,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # الخطوة 1: تنزيل الكود
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # الخطوة 2: إعداد فلاتر
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
-      
-      # الخطوة 3: (الجراحة) حذف أي مجلد android قديم
-      - name: SURGICAL STEP - Remove Old Android Folder
-        run: rm -rf android
 
-      # الخطوة 4: (إعادة البناء) إنشاء مجلد android جديد وسليم
-      - name: Rebuild Clean Android Folder
-        run: flutter create --platforms=android .
-
-      # الخطوة 5: تحميل الحزم
       - name: Get Dependencies
         run: flutter pub get
 
-      # --- هذا هو التعديل ---
-      # الخطوة 6: بناء كلا النوعين (AAB و APK)
       - name: Build Android App Bundle (AAB)
         run: flutter build appbundle --release
-        
+
       - name: Build Android APK
         run: flutter build apk --release
 
-      # الخطوة 7: رفع كلا الملفين الناتجين
       - name: Upload Release Artifacts
         uses: actions/upload-artifact@v4
         with:
