@@ -44,9 +44,12 @@ jobs:
           else
             echo "No io.flutter.app references found"
           fi
-
-      - name: Ensure Android v2 MainActivity & Manifest (write safe defaults)
-        run: |
+          - name: Build Release
+    run: |
+          cd android
+              ./gradlew app:bundleRelease --stacktrace --info
+              - name: Ensure Android v2 MainActivity & Manifest (write safe defaults)
+            run: |
           set -euo pipefail
           mkdir -p android/app/src/main/java/com/example/fight_app
           cat > android/app/src/main/java/com/example/fight_app/MainActivity.java <<'EOF'
