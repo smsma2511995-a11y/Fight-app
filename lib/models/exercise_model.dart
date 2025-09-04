@@ -1,16 +1,16 @@
-class MartialArtsExercise {
-  final int id;
+class Exercise {
+  final int? id;
   final String name;
   final String description;
-  final String category; // Karate, Judo, etc.
-  final int calories;
+  final String videoUrl;
+  final String? localPath; // الملف بعد التخزين
 
-  MartialArtsExercise({
-    required this.id,
+  Exercise({
+    this.id,
     required this.name,
     required this.description,
-    required this.category,
-    required this.calories,
+    required this.videoUrl,
+    this.localPath,
   });
 
   Map<String, dynamic> toMap() {
@@ -18,18 +18,18 @@ class MartialArtsExercise {
       'id': id,
       'name': name,
       'description': description,
-      'category': category,
-      'calories': calories,
+      'videoUrl': videoUrl,
+      'localPath': localPath,
     };
   }
 
-  factory MartialArtsExercise.fromMap(Map<String, dynamic> map) {
-    return MartialArtsExercise(
+  factory Exercise.fromMap(Map<String, dynamic> map) {
+    return Exercise(
       id: map['id'],
       name: map['name'],
       description: map['description'],
-      category: map['category'],
-      calories: map['calories'],
+      videoUrl: map['videoUrl'],
+      localPath: map['localPath'],
     );
   }
 }
