@@ -1,31 +1,27 @@
 class Exercise {
-  final int? id;
-  final String name;
-  final String description;
-  final String videoUrl;
-  final String? cachedPath;
+  int? id;
+  String name;
+  String description;
+  String videoUrl;
 
-  Exercise({
-    this.id,
-    required this.name,
-    required this.description,
-    required this.videoUrl,
-    this.cachedPath,
-  });
+  Exercise({this.id, required this.name, required this.description, required this.videoUrl});
 
-  Map<String, dynamic> toMap() => {
-        'id': id,
-        'name': name,
-        'description': description,
-        'videoUrl': videoUrl,
-        'cachedPath': cachedPath,
-      };
+  Map<String, dynamic> toMap() {
+    var map = {
+      'name': name,
+      'description': description,
+      'videoUrl': videoUrl,
+    };
+    if (id != null) map['id'] = id;
+    return map;
+  }
 
-  factory Exercise.fromMap(Map<String, dynamic> map) => Exercise(
-        id: map['id'],
-        name: map['name'],
-        description: map['description'],
-        videoUrl: map['videoUrl'],
-        cachedPath: map['cachedPath'],
-      );
+  factory Exercise.fromMap(Map<String, dynamic> map) {
+    return Exercise(
+      id: map['id'],
+      name: map['name'],
+      description: map['description'],
+      videoUrl: map['videoUrl'],
+    );
+  }
 }
