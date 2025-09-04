@@ -4,76 +4,53 @@ import '../models/exercise_model.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
+  static Database? _db;
+
   factory DatabaseHelper() => _instance;
   DatabaseHelper._internal();
 
-  static Database? _database;
-
-  Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDB();
-    return _database!;
+  Future<Database> get db async {
+    if (_db != null) return _db!;
+    _db = await _initDb();
+    return _db!;
   }
 
-  Future<Database> _initDB() async {
-    final path = join(await getDatabasesPath(), 'fight_app.db');
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE exercises(
-            id INTEGER PRIMARY KEY,
-            name TEXT,
-            description TEXT,
-            category TEXT,
-            calories INTEGER
-          )
-        ''');
-        await db.execute('''
-          CREATE TABLE progress(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            exerciseId INTEGER,
-            completedAt TEXT
-          )
-        ''');
-      },
-    );
+  Future<Database> _initDb() async {
+    String path = join(await getDatabasesPath(), 'exercises.db');
+    return await openDatabase(path, version: 1, onCreate: _onCreate);
   }
 
-  Future<int> insertExercise(MartialArtsExercise exercise) async {
-    final db = await database;
-    return await db.insert('exercises', exercise.toMap(),
+  Future<void> _onCreate(Database db, int version) async {
+    await db.execute('''
+      CREATE TABLE exercises (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        description TEXT,
+        videoUrl TEXT,
+        localPath TEXT
+      )
+    ''');
+  }
+
+  Future<int> insertExercise(Exercise exercise) async {
+    final database = await db;
+    return await database.insert('exercises', exercise.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<List<MartialArtsExercise>> getAllExercises() async {
-    final db = await database;
-    final maps = await db.query('exercises');
-    return maps.map((e) => MartialArtsExercise.fromMap(e)).toList();
+  Future<List<Exercise>> getExercises() async {
+    final database = await db;
+    final List<Map<String, dynamic>> maps = await database.query('exercises');
+    return List.generate(maps.length, (i) => Exercise.fromMap(maps[i]));
   }
 
-  Future<void> logExercise(int exerciseId) async {
-    final db = await database;
-    await db.insert('progress', {
-      'exerciseId': exerciseId,
-      'completedAt': DateTime.now().toIso8601String(),
-    });
-  }
-
-  Future<int> getTotalCompletedExercises() async {
-    final db = await database;
-    final result = await db.rawQuery('SELECT COUNT(*) FROM progress');
-    return Sqflite.firstIntValue(result) ?? 0;
-  }
-
-  Future<int> getTotalCaloriesBurned() async {
-    final db = await database;
-    final result = await db.rawQuery('''
-      SELECT SUM(e.calories)
-      FROM progress p
-      INNER JOIN exercises e ON p.exerciseId = e.id
-    ''');
-    return Sqflite.firstIntValue(result) ?? 0;
+  Future<void> updateExercise(Exercise exercise) async {
+    final database = await db;
+    await database.update(
+      'exercises',
+      exercise.toMap(),
+      where: 'id = ?',
+      whereArgs: [exercise.id],
+    );
   }
 }
