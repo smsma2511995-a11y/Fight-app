@@ -1,55 +1,22 @@
 name: fight_app
-description: A complete offline martial arts training app with exercises, diet plans, and a smart coach.
-publish_to: 'none' 
+description: Martial arts training app with offline cache + TTS
+publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.2.3 <4.0.0'
+  sdk: ">=2.18.0 <3.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  flutter_localizations:
-    sdk: flutter
-
-  # UI & Utilities
-  cupertino_icons: ^1.0.8
-  google_fonts: ^6.2.1
-  percent_indicator: ^4.2.3
-  fl_chart: ^0.68.0
-  
-  # Core Packages
-  sqflite: ^2.3.2
-  path_provider: ^2.1.2
-  flutter_riverpod: ^2.5.1
-  flutter_tts: ^4.0.2
-  just_audio: ^0.9.37
+  cached_network_image: ^3.3.1
+  flutter_cache_manager: ^3.3.1
+  video_player: ^2.7.0
+  flutter_tts: ^3.8.3
+  cupertino_icons: ^1.0.6
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
-
-flutter:
-  uses-material-design: true
-
-  # --- تم تعطيل هذا القسم مؤقتًا لأننا لا نستخدم ملفات محلية حاليًا ---
-  # assets:
-  #   - assets/data/
-  #   - assets/gifs/karate/
-  #   - assets/gifs/taekwondo/
-  #   - assets/gifs/boxing/
-  #   - assets/gifs/kungfu/
-  #   - assets/gifs/jiujitsu/
-  #   - assets/gifs/weapons/
-  #   - assets/gifs/fitness/
-  #   - assets/sounds/
-  #   - assets/fonts/
-
-  # --- وتم تعطيل هذا القسم أيضًا ---
-  # fonts:
-  #   - family: Cairo
-  #     fonts:
-  #       - asset: assets/fonts/Cairo-Regular.ttf
-  #       - asset: assets/fonts/Cairo-Bold.ttf
-  #         weight: 700
+  flutter_lints: ^2.0.0
+  
