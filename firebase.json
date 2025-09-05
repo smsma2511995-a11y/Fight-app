@@ -1,0 +1,10 @@
+{
+  "hosting": {},
+  "functions": {},
+  "build": {
+    "android": {
+      "type": "gradle",
+      "path": "app/build.gradle"
+    }
+  }
+}
