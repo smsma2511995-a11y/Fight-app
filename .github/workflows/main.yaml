@@ -3,54 +3,43 @@ name: Build Android App
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up JDK 17
-  uses: actions/setup-java@v3
-  with:
-    java-version: '17'
-    distribution: 'temurin'
-- name: Clean Gradle cache
- run: |
-    rm -rf ~/.gradle/caches
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-- name: Install dependencies
-  run: flutter pub get
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
 
-- name: Build App Bundle
-  run: flutter build appbundle --release
-    - name: Set up JDK
-      uses: actions/setup-java@v3
-      with:
-        java-version: '11'
-        distribution: 'temurin'
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
 
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.19.0'
+      - name: Install dependencies
+        run: flutter pub get
 
-    - name: Install dependencies
-      run: flutter pub get
+      - name: Clean project
+        run: flutter clean
 
-    - name: Clean project
-      run: flutter clean
+      - name: Build App Bundle
+        run: flutter build appbundle --release
 
-    - name: Build App Bundle
-      run: flutter build appbundle --release
+      - name: Build APK
+        run: flutter build apk --release
 
-    - name: Build APK
-      run: flutter build apk --release
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-binaries
-        path: |
-          build/app/outputs/bundle/release/app-release.aab
-          build/app/outputs/flutter-apk/app-release.apk
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-binaries
+          path: |
+            build/app/outputs/bundle/release/app-release.aab
+            build/app/outputs/flutter-apk/app-release.apk
