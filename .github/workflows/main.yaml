@@ -39,13 +39,13 @@ jobs:
         ./gradlew assembleRelease --stacktrace
 
     - name: Upload App Bundle (.aab)
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: app-bundle
         path: android/app/build/outputs/bundle/release/app-release.aab
 
     - name: Upload APK
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: app-apk
         path: android/app/build/outputs/apk/release/app-release.apk
