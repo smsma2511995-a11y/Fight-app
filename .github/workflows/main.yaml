@@ -2,22 +2,19 @@ name: Build Android App
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout source
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
     - name: Set up JDK
       uses: actions/setup-java@v3
       with:
-        java-version: '17'
+        java-version: '11'
         distribution: 'temurin'
 
     - name: Setup Flutter
@@ -28,24 +25,19 @@ jobs:
     - name: Install dependencies
       run: flutter pub get
 
-    - name: Build Android App Bundle
-      run: |
-        cd android
-        ./gradlew app:bundleRelease --stacktrace
+    - name: Clean project
+      run: flutter clean
 
-    - name: Build Android APK
-      run: |
-        cd android
-        ./gradlew assembleRelease --stacktrace
+    - name: Build App Bundle
+      run: flutter build appbundle --release --stacktrace
 
-    - name: Upload App Bundle (.aab)
+    - name: Build APK
+      run: flutter build apk --release --stacktrace
+
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: app-bundle
-        path: android/app/build/outputs/bundle/release/app-release.aab
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-apk
-        path: android/app/build/outputs/apk/release/app-release.apk
+        name: app-binaries
+        path: |
+          build/app/outputs/bundle/release/app-release.aab
+          build/app/outputs/flutter-apk/app-release.apk
