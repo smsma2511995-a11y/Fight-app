@@ -1,26 +1,76 @@
-- name: Run AI Review with Google Gemini
-  run: |
-    python - <<'EOF'
-    import os
-    import google.generativeai as genai
+name: Build, Analyze and AI Review
 
-    api_key = os.getenv("GOOGLE_API_KEY")
-    genai.configure(api_key=api_key)
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
-    # استخدم موديل Gemini
-    model = genai.GenerativeModel("gemini-1.5-flash")
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    # مثال بسيط: مراجعة كود
-    prompt = """
-    راجع الكود التالي وقل لي لو فيه مشاكل:
-    ```dart
-    void main() {
-      print("Hello World");
-    }
-    ```
-    """
-    response = model.generate_content(prompt)
-    print("AI Review Output:\n", response.text)
-    EOF
-  env:
-    GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release
+
+  code-analysis:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: java,kotlin
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+  ai-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install google-generativeai
+
+      - name: Run AI Review with Google Gemini
+        run: |
+          python - <<'EOF'
+          import os
+          import google.generativeai as genai
+
+          api_key = os.getenv("GOOGLE_API_KEY")
+          genai.configure(api_key=api_key)
+
+          model = genai.GenerativeModel("gemini-1.5-flash")
+
+          prompt = """
+          راجع الكود في المشروع وابحث عن مشاكل أو تحسينات ممكنة.
+          لو في أي أخطاء أو ممارسات سيئة في Flutter/Kotlin قولها.
+          """
+          response = model.generate_content(prompt)
+          print("AI Review Output:\n", response.text)
+          EOF
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
