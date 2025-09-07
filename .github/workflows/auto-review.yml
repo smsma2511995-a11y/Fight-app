@@ -1,0 +1,36 @@
+name: Universal AI Auto Fix
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  ai-fix:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install deps
+      run: pip install google-generativeai
+
+    - name: Run AI Review & Fix (direct overwrite)
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: python .github/scripts/ai_review_all.py
+
+    - name: Commit & PR AI Fix
+      uses: peter-evans/create-pull-request@v6
+      with:
+        commit-message: "🤖 AI Fix: auto-corrected project files"
+        title: "AI Auto Fix"
+        body: "تمت مراجعة كل الملفات وإصلاحها مباشرة باستخدام Gemini."
+        branch: ai-auto-fix
