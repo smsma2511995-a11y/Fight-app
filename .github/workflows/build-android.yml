@@ -9,7 +9,18 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+- name: Create new Flutter project
+  run: flutter create -t app fight_app_new
 
+- name: Copy source files
+  run: |
+    cp -r lib fight_app_new/
+    cp -r assets fight_app_new/ || true
+    cp pubspec.yaml fight_app_new/
+
+- name: Build APK
+  working-directory: fight_app_new
+  run: flutter build apk --release
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
