@@ -14,11 +14,9 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Clone template repo
-        run: |
-          git clone https://github.com/YOUR-USERNAME/YOUR-TEMPLATE-REPO.git template
+  run: git clone https://github.com/smsma2511995-a11y/fight__app.git template
           cp -r template/* .
           rm -rf template
-
       - name: Try Build Project (example with Gradle)
         run: |
           if [ -f "gradlew" ]; then
