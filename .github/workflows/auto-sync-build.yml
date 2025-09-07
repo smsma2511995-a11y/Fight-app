@@ -1,0 +1,39 @@
+name: Universal Auto Build & Sync
+
+on:
+  push:
+    branches: [ "main" ]   # يشتغل على كل Push للـ main
+  workflow_dispatch:       # تقدر تشغله يدوي برضه
+
+jobs:
+  build-and-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout current repo
+        uses: actions/checkout@v3
+
+      - name: Clone template repo
+        run: |
+          git clone https://github.com/YOUR-USERNAME/YOUR-TEMPLATE-REPO.git template
+          cp -r template/* .
+          rm -rf template
+
+      - name: Try Build Project (example with Gradle)
+        run: |
+          if [ -f "gradlew" ]; then
+            ./gradlew build || echo "Gradle build failed"
+          elif [ -f "package.json" ]; then
+            npm install && npm run build || echo "Node build failed"
+          elif [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt || echo "Python setup failed"
+          else
+            echo "No build system detected - skipped"
+          fi
+
+      - name: Create Pull Request for approval
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: auto/template-sync
+          title: "Sync updates from template repo"
+          body: "This PR contains updates from the template repo. Please review and approve."
