@@ -43,3 +43,4 @@ jobs:
           path: |
             build/app/outputs/bundle/release/app-release.aab
             build/app/outputs/flutter-apk/app-release.apk
+           ./gradlew assembleRelease 2>&1 | tee build.log || true
