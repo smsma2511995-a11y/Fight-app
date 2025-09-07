@@ -1,1 +1,53 @@
+name: AI Build Assistant
 
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Java & Flutter (for Flutter projects)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-17-jdk git unzip xz-utils
+          # install Flutter (stable)
+          git clone https://github.com/flutter/flutter.git -b stable --depth 1 $HOME/flutter
+          echo "$HOME/flutter/bin" >> $GITHUB_PATH
+          flutter --version
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install openai pygithub
+
+      - name: Run Flutter build and capture logs
+        id: build
+        run: |
+          set -o pipefail
+          if [ -f "pubspec.yaml" ]; then
+            flutter pub get
+            flutter build appbundle --debug 2>&1 | tee build.log || true
+          else
+            echo "No pubspec.yaml found. Skipping flutter build." | tee build.log
+          fi
+          echo "LOGFILE=$(pwd)/build.log" >> $GITHUB_OUTPUT
+
+      - name: Run AI fixer script
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python .github/ai/ai_fix.py --log build.log --repo "${{ github.repository }}" --branch "${{ github.ref_name || 'main' }}"
