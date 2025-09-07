@@ -7,41 +7,9 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-android:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.24.0'
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Build APK
-        run: flutter build apk --release
-
-  code-analysis:
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
-        with:
-          languages: java,kotlin
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
-
   ai-review:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -52,15 +20,18 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: pip install google-generativeai
+        run: |
+          pip install google-generativeai
 
-      - name: Run AI Review with Google Gemini
+      - name: Run AI Review with Gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python - <<'EOF'
           import os
           import google.generativeai as genai
 
-          api_key = os.getenv("GOOGLE_API_KEY")
+          api_key = os.getenv("GEMINI_API_KEY")
           genai.configure(api_key=api_key)
 
           model = genai.GenerativeModel("gemini-1.5-flash")
@@ -72,5 +43,3 @@ jobs:
           response = model.generate_content(prompt)
           print("AI Review Output:\n", response.text)
           EOF
-        env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
