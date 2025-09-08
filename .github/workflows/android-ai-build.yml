@@ -1,138 +1,16 @@
-name: Auto Build, AI-Fix & Multi Project Build
-
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-  workflow_dispatch:
-
-permissions:
-  contents: write
-  pull-requests: write
-
-jobs:
-  run-all:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Install tools (python, jq)
-        run: |
-          python -m pip install --upgrade pip
-          pip install google-generativeai
-          sudo apt-get update -y
-          sudo apt-get install -y jq
-
-      - name: Find projects and export list
-        id: find
-        run: |
-          projects=""
-          # Flutter
-          for f in $(find . -name "pubspec.yaml"); do
-            projects="$projects|flutter:${f%/*}"
-          done
-          # Gradle
-          for f in $(find . -name "build.gradle" -o -name "settings.gradle"); do
-            if [[ "$f" == *"/app/"* || "$f" == *"/app"* ]]; then
-              projects="$projects|gradle:${f%/*}"
-            fi
-          done
-          # Node
-          for f in $(find . -name "package.json"); do
-            projects="$projects|node:${f%/*}"
-          done
-          # Python
-          for f in $(find . -name "requirements.txt"); do
-            projects="$projects|python:${f%/*}"
-          done
-
-          projects=${projects#'|'}
-          echo "PROJECTS=$projects" >> $GITHUB_ENV
-          echo "Found projects: $projects"
-      
-      - name: Run AI auto-fixer (edits files, creates report)
-        id: ai_fix
+- name: Run AI Fix Script (Gemini)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          mkdir -p .github
           python .github/scripts/ai_fix_all.py
-          {
-            echo "report<<REPORT"
-            cat .github/ai_report.txt
-            echo "REPORT"
-          } >> $GITHUB_OUTPUT
+          echo "report<<REPORT" >> $GITHUB_OUTPUT
+          cat .github/ai_report.txt >> $GITHUB_OUTPUT
+          echo "REPORT" >> $GITHUB_OUTPUT
 
-      - name: Create Pull Request with AI changes (if any)
-        uses: peter-evans/create-pull-request@v6
-        with:
-          branch: ai-fix-${{ github.run_id }}
-          title: "🤖 AI suggested fixes (auto)"
-          commit-message: "🤖 AI applied automatic fixes"
-          body: ${{ steps.ai_fix.outputs.report }}
-
-      - name: Checkout AI branch if exists (so build uses fixed files)
+      - name: Commit AI Fixes
         run: |
-          BR=ai-fix-${{ github.run_id }}
-          git fetch origin $BR || true
-          if git ls-remote --exit-code origin $BR >/dev/null 2>&1; then
-            git checkout -B $BR origin/$BR
-            echo "Checked out $BR"
-          else
-            echo "AI branch not found; continuing on current branch"
-          fi
-
-      - name: Build all detected projects and collect artifacts
-        run: |
-          set -e
-          mkdir -p artifacts
-          IFS='|' read -ra P <<< "${PROJECTS}"
-          for item in "${P[@]}"; do
-            [ -z "$item" ] && continue
-            type="${item%%:*}"
-            path="${item#*:}"
-            echo "---- Building $type at $path ----"
-            cd "$path" || continue
-
-            if [ "$type" = "flutter" ]; then
-              flutter pub get || true
-              flutter analyze || true
-              flutter test || true
-              flutter build apk --release || true
-              mkdir -p ../../artifacts/flutter/$(basename $path)
-              cp build/app/outputs/flutter-apk/app-release.apk ../../artifacts/flutter/$(basename $path)/ 2>/dev/null || true
-            elif [ "$type" = "gradle" ]; then
-              chmod +x gradlew || true
-              ./gradlew assembleRelease || true
-              mkdir -p ../../artifacts/gradle/$(basename $path)
-              cp app/build/outputs/apk/release/*.apk ../../artifacts/gradle/$(basename $path)/ 2>/dev/null || true
-            elif [ "$type" = "node" ]; then
-              npm install || true
-              npm run lint || true
-              npm test || true
-              npm run build || true
-              mkdir -p ../../artifacts/node/$(basename $path)
-              cp -r dist/* ../../artifacts/node/$(basename $path)/ 2>/dev/null || true
-            elif [ "$type" = "python" ]; then
-              pip install -r requirements.txt || true
-              pytest || true
-              mkdir -p ../../artifacts/python/$(basename $path)
-              cp -r build/* ../../artifacts/python/$(basename $path)/ 2>/dev/null || true
-            fi
-
-            cd - >/dev/null
-          done
-
-          # عشان نتأكد فيه حاجة مرفوعة
-          touch artifacts/.keep
-
-      - name: Upload all artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: artifacts/
-          if-no-files-found: warn
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "🤖 Gemini auto-fix" || echo "No changes to commit"
+          git push origin HEAD:${GITHUB_REF#refs/heads/}
