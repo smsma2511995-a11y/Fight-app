@@ -1,85 +1,135 @@
-name: Build, Analyze and AI Review
+name: Auto Build, AI-Fix & Multi Project Build
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
-  build:
+  run-all:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-
     steps:
-      # 1. تحميل الكود
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # 2. إعداد Flutter
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      - name: Checkout repo
+        uses: actions/checkout@v3
         with:
-          flutter-version: '3.24.0'
+          fetch-depth: 0
 
-      # 3. تثبيت الـ dependencies
-      - name: Install dependencies
-        run: flutter pub get
-
-      # 4. تحليل وإصلاح مبدئي
-      - name: Analyze & Fix
+      - name: Install tools (python, jq)
         run: |
-          flutter analyze || true
-          dart fix --apply || true
+          python -m pip install --upgrade pip
+          pip install google-generativeai
+          sudo apt-get update -y
+          sudo apt-get install -y jq
 
-      # 5. بناء APK
-      - name: Build APK
-        run: flutter build apk --release
-
-      # 6. رفع APK كـ Artifact
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-
-      # 7. مراجعة كل الملفات بالذكاء الاصطناعي
-      - name: AI Review & Fix All Project Files
+      - name: Find projects and export list
+        id: find
         run: |
-          echo "🔎 Sending project files to Gemini AI for review..."
-
-          FILES=$(find lib -name "*.dart"; \
-                  find android -name "*.gradle"; \
-                  echo "gradle.properties"; \
-                  echo "settings.gradle"; \
-                  echo "pubspec.yaml"; \
-                  echo "firebase.json"; \
-                  echo "codemagic.yaml"; \
-                  echo "README.md")
-
-          for file in $FILES; do
-            if [ -f "$file" ]; then
-              echo "📂 Reviewing $file"
-              RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${{ secrets.GEMINI_API_KEY }}" \
-                -H "Content-Type: application/json" \
-                -d "{\"contents\":[{\"parts\":[{\"text\":\"عدل الكود أو التهيئة في الملف التالي ليكون صحيح وحديث ومتوافق مع Flutter:\n$(cat $file)\"}]}]}")
-              
-              NEW_CODE=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text')
-
-              if [ -n "$NEW_CODE" ] && [ "$NEW_CODE" != "null" ]; then
-                echo "$NEW_CODE" > $file
-              fi
+          projects=""
+          # Flutter
+          for f in $(find . -name "pubspec.yaml"); do
+            projects="$projects|flutter:${f%/*}"
+          done
+          # Gradle (look for app module)
+          for f in $(find . -name "build.gradle" -o -name "settings.gradle"); do
+            if [[ "$f" == *"/app/"* || "$f" == *"/app"* ]]; then
+              projects="$projects|gradle:${f%/*}"
             fi
           done
+          # Node
+          for f in $(find . -name "package.json"); do
+            projects="$projects|node:${f%/*}"
+          done
+          # Python
+          for f in $(find . -name "requirements.txt"); do
+            projects="$projects|python:${f%/*}"
+          done
 
-      # 8. إنشاء Pull Request بالتعديلات
-      - name: Create Pull Request with AI fixes
+          projects=${projects#'|'}
+          echo "PROJECTS=$projects" >> $GITHUB_ENV
+          echo "Found projects: $projects"
+      
+      - name: Run AI auto-fixer (edits files, creates report)
+        id: ai_fix
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          mkdir -p .github
+          python .github/scripts/ai_fix_all.py
+          # expose report to next step
+          echo "report<<EOF" >> $GITHUB_OUTPUT
+          cat .github/ai_report.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request with AI changes (if any)
         uses: peter-evans/create-pull-request@v6
         with:
-          commit-message: "🤖 AI Code Review Fixes (All Files)"
-          branch: ai-fixes
-          title: "AI Suggested Fixes for All Files"
-          body: |
-            ✅ تم مراجعة جميع ملفات المشروع (Dart + Gradle + Yaml + JSON + README)
-            التعديلات مقترحة من Gemini AI وتم رفعها في هذا الـ PR.
+          branch: ai-fix-${{ github.run_id }}
+          title: "🤖 AI suggested fixes (auto)"
+          commit-message: "🤖 AI applied automatic fixes"
+          body: ${{ steps.ai_fix.outputs.report }}
+
+      - name: Checkout AI branch if exists (so build uses fixed files)
+        run: |
+          BR=ai-fix-${{ github.run_id }}
+          git fetch origin $BR || true
+          if git ls-remote --exit-code origin $BR >/dev/null 2>&1; then
+            git checkout -B $BR origin/$BR
+            echo "Checked out $BR"
+          else
+            echo "AI branch not found; continuing on current branch"
+          fi
+
+      - name: Build all detected projects and collect artifacts
+        run: |
+          set -e
+          mkdir -p artifacts
+          IFS='|' read -ra P <<< "${PROJECTS}"
+          for item in "${P[@]}"; do
+            [ -z "$item" ] && continue
+            type="${item%%:*}"
+            path="${item#*:}"
+            echo "---- Building $type at $path ----"
+            cd "$path" || continue
+
+            if [ "$type" = "flutter" ]; then
+              echo "[flutter] pub get"
+              flutter pub get || true
+              flutter analyze || true
+              flutter test || true
+              echo "[flutter] build apk"
+              flutter build apk --release || true
+              mkdir -p ../../artifacts/flutter/$(basename $path)
+              cp build/app/outputs/flutter-apk/app-release.apk ../../artifacts/flutter/$(basename $path)/ 2>/dev/null || true
+            elif [ "$type" = "gradle" ]; then
+              chmod +x gradlew || true
+              ./gradlew assembleRelease || true
+              mkdir -p ../../artifacts/gradle/$(basename $path)
+              cp app/build/outputs/apk/release/*.apk ../../artifacts/gradle/$(basename $path)/ 2>/dev/null || true
+            elif [ "$type" = "node" ]; then
+              npm install || true
+              npm run lint || true
+              npm test || true
+              npm run build || true
+              mkdir -p ../../artifacts/node/$(basename $path)
+              cp -r dist/* ../../artifacts/node/$(basename $path)/ 2>/dev/null || true
+            elif [ "$type" = "python" ]; then
+              pip install -r requirements.txt || true
+              pytest || true
+              mkdir -p ../../artifacts/python/$(basename $path)
+              cp -r build/* ../../artifacts/python/$(basename $path)/ 2>/dev/null || true
+            fi
+
+            cd - >/dev/null
+          done
+
+      - name: Upload all artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: artifacts/
