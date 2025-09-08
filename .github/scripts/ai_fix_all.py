@@ -1,65 +1,43 @@
-#!/usr/bin/env python3
-import os, glob, time
-import google.generativeai as genai
+import os
+import subprocess
+import sys
 
-API_KEY = os.environ.get("GEMINI_API_KEY")
-if not API_KEY:
-    print("No GEMINI_API_KEY in environment - aborting.")
-    exit(1)
-
-genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel("gemini-1.5-flash")
-
-patterns = [
-    "lib/**/*.dart",
-    "**/pubspec.yaml",
-    "**/build.gradle",
-    "**/settings.gradle",
-    "**/gradle.properties",
-    "**/package.json",
-    "**/requirements.txt",
-    "firebase.json",
-    "codemagic.yaml",
-    "README.md"
-]
-
-files = []
-for p in patterns:
-    files.extend(glob.glob(p, recursive=True))
-files = sorted(set(files))
-
-report = []
-changed = 0
-
-def trim(s, n=7000):
-    return s if len(s) <= n else s[:n//2] + "\n/*...TRUNCATED...*/\n" + s[-n//2:]
-
-for f in files:
-    try:
-        text = open(f, "r", encoding="utf-8", errors="ignore").read()
-    except Exception as e:
-        report.append(f"ERROR reading {f}: {e}")
-        continue
-    prompt = (
-        "You are an expert developer. Fix and upgrade this file so it is correct and compatible. "
-        "Return ONLY the full corrected file content. No explanations.\n\n"
-        f"FILEPATH: {f}\n\n{trim(text)}"
+def run_cmd(command):
+    """Run a shell command safely and stream output."""
+    print(f"\n▶ Running: {command}\n")
+    process = subprocess.Popen(
+        command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
     )
-    try:
-        resp = model.generate_content(prompt)
-        new = (resp.text or "").strip()
-        if new and new != text:
-            with open(f, "w", encoding="utf-8") as w:
-                w.write(new)
-            report.append(f"UPDATED: {f}")
-            changed += 1
-        else:
-            report.append(f"NOCHANGE: {f}")
-    except Exception as e:
-        report.append(f"AI ERROR {f}: {e}")
-    time.sleep(1)
+    for line in process.stdout:
+        print(line, end="")
+    stderr = process.stderr.read()
+    if stderr:
+        print(f"\n⚠️ Error:\n{stderr}")
+    process.wait()
+    return process.returncode
 
-report.insert(0, f"AI Fix run - targeted {len(files)} files - updated {changed}")
-os.makedirs(".github", exist_ok=True)
-with open(".github/ai_report.txt", "w", encoding="utf-8") as r:
-    r.write("\n".join(report))
+def main():
+    print("🚀 Starting AI Fix & Build Script...")
+
+    # Step 1: Clean project
+    run_cmd("./gradlew clean")
+
+    # Step 2: Try building Debug APK
+    code = run_cmd("./gradlew assembleDebug")
+    if code != 0:
+        print("❌ Debug build failed, trying Release...")
+        run_cmd("./gradlew assembleRelease")
+
+    # Step 3: Check artifacts
+    debug_apk = "app/build/outputs/apk/debug/app-debug.apk"
+    release_apk = "app/build/outputs/apk/release/app-release.apk"
+
+    if os.path.exists(debug_apk):
+        print(f"✅ Debug APK generated at: {debug_apk}")
+    elif os.path.exists(release_apk):
+        print(f"✅ Release APK generated at: {release_apk}")
+    else:
+        print("❌ No APKs found. Please check Gradle logs.")
+
+if __name__ == "__main__":
+    sys.exit(main())
