@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       # 1. تحميل الكود
@@ -24,13 +27,13 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # 4. تحليل وإصلاح الكود (أوامر Dart)
+      # 4. تحليل وإصلاح مبدئي
       - name: Analyze & Fix
         run: |
           flutter analyze || true
           dart fix --apply || true
 
-      # 5. بناء APK (نسخة Release)
+      # 5. بناء APK
       - name: Build APK
         run: flutter build apk --release
 
@@ -41,10 +44,42 @@ jobs:
           name: android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
-      # 7. مراجعة الكود بالذكاء الاصطناعي (Gemini)
-      - name: AI Review with Gemini
+      # 7. مراجعة كل الملفات بالذكاء الاصطناعي
+      - name: AI Review & Fix All Project Files
         run: |
-          echo "🔎 Sending main.dart to Gemini AI for review..."
-          curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${{ secrets.GEMINI_API_KEY }}" \
-          -H "Content-Type: application/json" \
-          -d "{\"contents\":[{\"parts\":[{\"text\":\"راجع الكود التالي واصلحه:\n$(cat lib/main.dart)\"}]}]}"
+          echo "🔎 Sending project files to Gemini AI for review..."
+
+          FILES=$(find lib -name "*.dart"; \
+                  find android -name "*.gradle"; \
+                  echo "gradle.properties"; \
+                  echo "settings.gradle"; \
+                  echo "pubspec.yaml"; \
+                  echo "firebase.json"; \
+                  echo "codemagic.yaml"; \
+                  echo "README.md")
+
+          for file in $FILES; do
+            if [ -f "$file" ]; then
+              echo "📂 Reviewing $file"
+              RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${{ secrets.GEMINI_API_KEY }}" \
+                -H "Content-Type: application/json" \
+                -d "{\"contents\":[{\"parts\":[{\"text\":\"عدل الكود أو التهيئة في الملف التالي ليكون صحيح وحديث ومتوافق مع Flutter:\n$(cat $file)\"}]}]}")
+              
+              NEW_CODE=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text')
+
+              if [ -n "$NEW_CODE" ] && [ "$NEW_CODE" != "null" ]; then
+                echo "$NEW_CODE" > $file
+              fi
+            fi
+          done
+
+      # 8. إنشاء Pull Request بالتعديلات
+      - name: Create Pull Request with AI fixes
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "🤖 AI Code Review Fixes (All Files)"
+          branch: ai-fixes
+          title: "AI Suggested Fixes for All Files"
+          body: |
+            ✅ تم مراجعة جميع ملفات المشروع (Dart + Gradle + Yaml + JSON + README)
+            التعديلات مقترحة من Gemini AI وتم رفعها في هذا الـ PR.
