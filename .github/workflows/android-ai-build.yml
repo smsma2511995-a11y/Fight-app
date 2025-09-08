@@ -48,10 +48,11 @@ jobs:
           for f in $(find . -name "requirements.txt"); do
             projects="$projects|python:${f%/*}"
           done
+
           projects=${projects#'|'}
           echo "PROJECTS=$projects" >> $GITHUB_ENV
           echo "Found projects: $projects"
-
+      
       - name: Run AI auto-fixer (edits files, creates report)
         id: ai_fix
         env:
@@ -59,9 +60,11 @@ jobs:
         run: |
           mkdir -p .github
           python .github/scripts/ai_fix_all.py
-          echo "report<<EOF" >> $GITHUB_OUTPUT
-          cat .github/ai_report.txt >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "report<<REPORT"
+            cat .github/ai_report.txt
+            echo "REPORT"
+          } >> $GITHUB_OUTPUT
 
       - name: Create Pull Request with AI changes (if any)
         uses: peter-evans/create-pull-request@v6
@@ -77,6 +80,7 @@ jobs:
           git fetch origin $BR || true
           if git ls-remote --exit-code origin $BR >/dev/null 2>&1; then
             git checkout -B $BR origin/$BR
+            echo "Checked out $BR"
           else
             echo "AI branch not found; continuing on current branch"
           fi
@@ -92,6 +96,7 @@ jobs:
             path="${item#*:}"
             echo "---- Building $type at $path ----"
             cd "$path" || continue
+
             if [ "$type" = "flutter" ]; then
               flutter pub get || true
               flutter analyze || true
@@ -117,8 +122,12 @@ jobs:
               mkdir -p ../../artifacts/python/$(basename $path)
               cp -r build/* ../../artifacts/python/$(basename $path)/ 2>/dev/null || true
             fi
+
             cd - >/dev/null
           done
+
+          # عشان نتأكد فيه حاجة مرفوعة
+          touch artifacts/.keep
 
       - name: Upload all artifacts
         if: always()
@@ -126,3 +135,4 @@ jobs:
         with:
           name: build-artifacts
           path: artifacts/
+          if-no-files-found: warn
