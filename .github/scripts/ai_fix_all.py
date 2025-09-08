@@ -1,43 +1,85 @@
+#!/usr/bin/env python3
 import os
-import subprocess
-import sys
+import glob
+import time
+import google.generativeai as genai
 
-def run_cmd(command):
-    """Run a shell command safely and stream output."""
-    print(f"\n▶ Running: {command}\n")
-    process = subprocess.Popen(
-        command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-    )
-    for line in process.stdout:
-        print(line, end="")
-    stderr = process.stderr.read()
-    if stderr:
-        print(f"\n⚠️ Error:\n{stderr}")
-    process.wait()
-    return process.returncode
+# 🔑 جلب مفتاح Gemini
+API_KEY = os.getenv("GEMINI_API_KEY")
+if not API_KEY:
+    print("❌ مفيش مفتاح GEMINI_API_KEY")
+    exit(1)
 
-def main():
-    print("🚀 Starting AI Fix & Build Script...")
+genai.configure(api_key=API_KEY)
+model = genai.GenerativeModel("gemini-1.5-flash")
 
-    # Step 1: Clean project
-    run_cmd("./gradlew clean")
+# الامتدادات المستهدفة للتصليح
+patterns = [
+    "lib/**/*.dart",
+    "**/*.gradle",
+    "**/*.yaml",
+    "**/*.yml",
+    "**/*.xml",
+    "**/*.kt",
+    "**/*.java",
+    "package.json",
+    "requirements.txt"
+]
 
-    # Step 2: Try building Debug APK
-    code = run_cmd("./gradlew assembleDebug")
-    if code != 0:
-        print("❌ Debug build failed, trying Release...")
-        run_cmd("./gradlew assembleRelease")
+# جمع الملفات
+files = []
+for p in patterns:
+    files.extend(glob.glob(p, recursive=True))
+files = sorted(set(files))
 
-    # Step 3: Check artifacts
-    debug_apk = "app/build/outputs/apk/debug/app-debug.apk"
-    release_apk = "app/build/outputs/apk/release/app-release.apk"
+report_lines = []
+changed = 0
 
-    if os.path.exists(debug_apk):
-        print(f"✅ Debug APK generated at: {debug_apk}")
-    elif os.path.exists(release_apk):
-        print(f"✅ Release APK generated at: {release_apk}")
-    else:
-        print("❌ No APKs found. Please check Gradle logs.")
+def prepare_text(s, max_chars=6000):
+    if len(s) <= max_chars:
+        return s
+    half = max_chars // 2
+    return s[:half] + "\n\n/*...TRUNCATED...*/\n\n" + s[-half:]
 
-if __name__ == "__main__":
-    sys.exit(main())
+for f in files:
+    try:
+        with open(f, "r", encoding="utf-8", errors="ignore") as fh:
+            orig = fh.read()
+    except Exception as e:
+        report_lines.append(f"❌ قراءة {f} فشلت: {e}")
+        continue
+
+    snippet = prepare_text(orig)
+    prompt = f"""
+    أصلح الكود التالي بحيث يكون صالح للبناء والتشغيل.
+    رجع **الملف كامل** بدون شروحات، ولا تحذف أي جزء إلا لو ضروري.
+
+    FILEPATH: {f}
+    ===== FILE START =====
+    {snippet}
+    ===== FILE END =====
+    """
+
+    try:
+        resp = model.generate_content(prompt)
+        new = resp.text or ""
+        new = new.strip("\r\n")
+
+        if new and new != orig:
+            with open(f, "w", encoding="utf-8") as fh:
+                fh.write(new)
+            report_lines.append(f"✅ تم التحديث: {f}")
+            changed += 1
+        else:
+            report_lines.append(f"ℹ️ بدون تغيير: {f}")
+    except Exception as e:
+        report_lines.append(f"⚠️ خطأ AI مع {f}: {e}")
+
+    time.sleep(1)
+
+# حفظ تقرير
+os.makedirs(".github", exist_ok=True)
+with open(".github/ai_report.txt", "w", encoding="utf-8") as rf:
+    rf.write("\n".join(report_lines))
+
+print(f"🎯 AI خلص — عدّل {changed} ملف/ملفات. تقرير محفوظ في .github/ai_report.txt")
