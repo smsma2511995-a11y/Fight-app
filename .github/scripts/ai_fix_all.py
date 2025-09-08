@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-import os
-import glob
-import time
+import os, glob, time
 import google.generativeai as genai
 
 API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -12,7 +10,6 @@ if not API_KEY:
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel("gemini-1.5-flash")
 
-# الملفات المستهدفة (تقدر تضيف امتدادات لو حبيت)
 patterns = [
     "lib/**/*.dart",
     "**/pubspec.yaml",
@@ -29,52 +26,40 @@ patterns = [
 files = []
 for p in patterns:
     files.extend(glob.glob(p, recursive=True))
-
 files = sorted(set(files))
 
-report_lines = []
+report = []
 changed = 0
 
-def prepare_text(s, max_chars=7000):
-    if len(s) <= max_chars:
-        return s
-    half = max_chars//2
-    return s[:half] + "\n\n/*...TRUNCATED...*/\n\n" + s[-half:]
+def trim(s, n=7000):
+    return s if len(s) <= n else s[:n//2] + "\n/*...TRUNCATED...*/\n" + s[-n//2:]
 
 for f in files:
     try:
-        with open(f, "r", encoding="utf-8", errors="ignore") as fh:
-            orig = fh.read()
+        text = open(f, "r", encoding="utf-8", errors="ignore").read()
     except Exception as e:
-        report_lines.append(f"ERROR reading {f}: {e}")
+        report.append(f"ERROR reading {f}: {e}")
         continue
-
-    snippet = prepare_text(orig)
     prompt = (
         "You are an expert developer. Fix and upgrade this file so it is correct and compatible. "
-        "Return ONLY the full corrected file content, no explanations, no comments about what you changed. "
-        f"If nothing to change, return the original content unchanged.\n\nFILEPATH: {f}\n\n{snippet}"
+        "Return ONLY the full corrected file content. No explanations.\n\n"
+        f"FILEPATH: {f}\n\n{trim(text)}"
     )
-
     try:
         resp = model.generate_content(prompt)
-        new = resp.text or ""
-        new = new.strip("\r\n")
-        if new and new != orig:
-            with open(f, "w", encoding="utf-8") as fh:
-                fh.write(new)
-            report_lines.append(f"UPDATED: {f}")
+        new = (resp.text or "").strip()
+        if new and new != text:
+            with open(f, "w", encoding="utf-8") as w:
+                w.write(new)
+            report.append(f"UPDATED: {f}")
             changed += 1
         else:
-            report_lines.append(f"NOCHANGE: {f}")
+            report.append(f"NOCHANGE: {f}")
     except Exception as e:
-        report_lines.append(f"AI ERROR for {f}: {e}")
+        report.append(f"AI ERROR {f}: {e}")
+    time.sleep(1)
 
-    time.sleep(1)  # avoid too-fast requests
-
-report_lines.insert(0, f"AI Fix run - files targeted: {len(files)} - updated: {changed}")
+report.insert(0, f"AI Fix run - targeted {len(files)} files - updated {changed}")
 os.makedirs(".github", exist_ok=True)
-with open(".github/ai_report.txt", "w", encoding="utf-8") as rf:
-    rf.write("\n".join(report_lines))
-
-print("AI fix completed. Report written to .github/ai_report.txt")
+with open(".github/ai_report.txt", "w", encoding="utf-8") as r:
+    r.write("\n".join(report))
