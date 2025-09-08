@@ -1,0 +1,50 @@
+name: Build, Analyze and AI Review
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. تحميل الكود
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. إعداد Flutter
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+
+      # 3. تثبيت الـ dependencies
+      - name: Install dependencies
+        run: flutter pub get
+
+      # 4. تحليل وإصلاح الكود (أوامر Dart)
+      - name: Analyze & Fix
+        run: |
+          flutter analyze || true
+          dart fix --apply || true
+
+      # 5. بناء APK (نسخة Release)
+      - name: Build APK
+        run: flutter build apk --release
+
+      # 6. رفع APK كـ Artifact
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      # 7. مراجعة الكود بالذكاء الاصطناعي (Gemini)
+      - name: AI Review with Gemini
+        run: |
+          echo "🔎 Sending main.dart to Gemini AI for review..."
+          curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${{ secrets.GEMINI_API_KEY }}" \
+          -H "Content-Type: application/json" \
+          -d "{\"contents\":[{\"parts\":[{\"text\":\"راجع الكود التالي واصلحه:\n$(cat lib/main.dart)\"}]}]}"
