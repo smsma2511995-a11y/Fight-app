@@ -61,10 +61,7 @@ jobs:
           mkdir -p .github/scripts
           # BEGIN Python script content - Pay EXTREME attention to indentation here
           cat > .github/scripts/ai_fix_all.py << 'EOF_PYTHON_SCRIPT'
-import os
-import glob
-import time
-from google import genai
+import os import glob import time from google import genai
 # Configure genai client
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
