@@ -58,78 +58,13 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
+          # Ensure the directory for scripts exists
           mkdir -p .github/scripts
-          # BEGIN Python script content - Pay EXTREME attention to indentation here
-          cat > .github/scripts/ai_fix_all.py << 'EOF_PYTHON_SCRIPT'
-import os 
-import glob 
-import time 
-from google import genai
-# Configure genai client
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-
-patterns = [
-    "lib/**/*.dart",
-    "**/pubspec.yaml",
-    "**/build.gradle",
-    "**/build.gradle.kts",
-    "**/settings.gradle",
-    "**/gradle.properties",
-    "**/package.json",
-    "**/requirements.txt",
-    "firebase.json",
-    "codemagic.yaml",
-    "README.md"
-]
-
-files = sorted(set(sum([glob.glob(p, recursive=True) for p in patterns], [])))
-report_lines = []
-changed = 0
-
-def prepare_text(s, max_chars=7000):
-    if len(s) <= max_chars:
-        return s
-    half = max_chars//2
-    return s[:half] + "\n\n/*...TRUNCATED...*/\n\n" + s[-half:]
-
-for f in files:
-    try:
-        with open(f, "r", encoding="utf-8", errors="ignore") as fh:
-            orig = fh.read()
-    except Exception as e:
-        report_lines.append(f"ERROR reading {f}: {e}")
-        continue
-
-    snippet = prepare_text(orig)
-    prompt = f"You are an expert developer. Fix and upgrade this file:\nFILEPATH: {f}\n{snippet}"
-
-    try:
-        model = genai.GenerativeModel("gemini-pro") # Or "gemini-1.5-flash" depending on your API/Region
-        resp = model.generate_content(prompt)
-        new = resp.text.strip()
-        if new and new != orig:
-            with open(f, "w", encoding="utf-8") as fh:
-                fh.write(new)
-            report_lines.append(f"UPDATED: {f}")
-            changed += 1
-        else:
-            report_lines.append(f"NOCHANGE: {f}")
-    except Exception as e:
-        report_lines.append(f"AI ERROR for {f}: {e}")
-
-    time.sleep(1)
-
-report_lines.insert(0, f"AI Fix run - files targeted: {len(files)} - updated: {changed}")
-os.makedirs(".github", exist_ok=True)
-with open(".github/ai_report.txt", "w", encoding="utf-8") as rf:
-    rf.write("\n".join(report_lines))
-
-print("AI fix completed. Report written to .github/ai_report.txt")
-EOF_PYTHON_SCRIPT
-          # END Python script content
-
+          # Now, simply run the Python script
+          # The Python script will handle creating the ai_report.txt
           python .github/scripts/ai_fix_all.py 2>&1 | tee .github/ai_report.txt
 
+          # Capture the report content for the PR body
           report_content=$(cat .github/ai_report.txt)
           echo "report<<EOF" >> $GITHUB_OUTPUT
           echo "$report_content" >> $GITHUB_OUTPUT
