@@ -58,13 +58,12 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          # Ensure the directory for scripts exists
+          # هذه هي الكتلة الجديدة المعدلة!
+          # لا يوجد كود بايثون هنا مباشرةً بعد الآن.
+          # فقط أمر Bash لتشغيل ملف ai_fix_all.py
           mkdir -p .github/scripts
-          # Now, simply run the Python script
-          # The Python script will handle creating the ai_report.txt
           python .github/scripts/ai_fix_all.py 2>&1 | tee .github/ai_report.txt
 
-          # Capture the report content for the PR body
           report_content=$(cat .github/ai_report.txt)
           echo "report<<EOF" >> $GITHUB_OUTPUT
           echo "$report_content" >> $GITHUB_OUTPUT
@@ -137,3 +136,18 @@ jobs:
           name: build-artifacts
           path: artifacts/
           if-no-files-found: ignore
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          # هذا السطر الإضافي يمنح صلاحيات كافية للتوكن لإنشاء PRs
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ai-fix-${{ github.run_id }}
+          title: "🤖 AI suggested fixes"
+          commit-message: "🤖 AI applied automatic fixes"
+          body: ${{ steps.ai-fix.outputs.report }}
+    ```
+    **ملاحظة:** قد تحتاج إلى التأكد من أن `GITHUB_TOKEN` الافتراضي في إعدادات المستودع لديك لديه صلاحيات الكتابة لطلبات السحب. عادةً ما يكون `contents: write` و `pull-requests: write` في قسم `permissions` كافيين، ولكن إذا استمرت المشكلة، قد تحتاج إلى التحقق من الإعدادات الأمنية لمستودعك (Settings > Actions > General > Workflow permissions).
+
+**الرجاء التركيز على تطبيق التعديلات على الملفين بشكل صحيح هذه المرة. المشكلة الأولى (YAML Syntax) هي عقبة أساسية يجب تجاوزها قبل أي شيء آخر.**
+Use Arrow Up and Arrow Down to select a turn, Enter to jump to it, and Escape to return to the chat.
+Start typing a prompt
