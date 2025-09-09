@@ -140,8 +140,8 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           # هذا السطر الإضافي يمنح صلاحيات كافية للتوكن لإنشاء PRs
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ai-fix-${{ github.run_id }}
+          token: ${{ secrets.MY_GITHUB_API_KEY }}
+          branch: ai-fix-${{ github.run_number }}-${{ github.run_id }}
           title: "🤖 AI suggested fixes"
           commit-message: "🤖 AI applied automatic fixes"
           body: ${{ steps.ai-fix.outputs.report }}
