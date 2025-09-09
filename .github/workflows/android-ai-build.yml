@@ -145,9 +145,4 @@ jobs:
           title: "🤖 AI suggested fixes"
           commit-message: "🤖 AI applied automatic fixes"
           body: ${{ steps.ai-fix.outputs.report }}
-    ```
-    **ملاحظة:** قد تحتاج إلى التأكد من أن `GITHUB_TOKEN` الافتراضي في إعدادات المستودع لديك لديه صلاحيات الكتابة لطلبات السحب. عادةً ما يكون `contents: write` و `pull-requests: write` في قسم `permissions` كافيين، ولكن إذا استمرت المشكلة، قد تحتاج إلى التحقق من الإعدادات الأمنية لمستودعك (Settings > Actions > General > Workflow permissions).
-
-**الرجاء التركيز على تطبيق التعديلات على الملفين بشكل صحيح هذه المرة. المشكلة الأولى (YAML Syntax) هي عقبة أساسية يجب تجاوزها قبل أي شيء آخر.**
-Use Arrow Up and Arrow Down to select a turn, Enter to jump to it, and Escape to return to the chat.
-Start typing a prompt
+    
