@@ -145,4 +145,12 @@ jobs:
           title: "🤖 AI suggested fixes"
           commit-message: "🤖 AI applied automatic fixes"
           body: ${{ steps.ai-fix.outputs.report }}
-    
+      - name: Copy APK to artifacts
+        run: |
+         mkdir -p artifacts/apk
+         cp build/app/outputs/flutter-apk/app-release.apk artifacts/apk/ 2>/dev/null || true
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+            name: APK
+            path: artifacts/apk/
