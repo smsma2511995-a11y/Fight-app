@@ -8,7 +8,11 @@ if "GEMINI_API_KEY" not in os.environ:
     print("Error: GEMINI_API_KEY environment variable not set.")
     exit(1)
 
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+# التغيير هنا: العودة إلى استخدام genai.Client() بدلاً من genai.configure()
+# أو إذا كنت متأكداً من تثبيت أحدث إصدار، فقد تحتاج إلى نموذج مختلف للمصنف.
+# في هذه الحالة، سنستخدم genai.Client
+client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+
 
 patterns = [
     "lib/**/*.dart",
@@ -46,9 +50,9 @@ for f in files:
     prompt = f"You are an expert developer. Fix and upgrade this file:\nFILEPATH: {f}\n{snippet}"
 
     try:
-        model = genai.GenerativeModel("gemini-pro") # Or "gemini-1.5-flash"
-        resp = model.generate_content(prompt)
-        new = resp.text.strip()
+        # التغيير هنا: استخدام العميل الذي تم تهيئته مباشرةً
+        resp = client.generate_content(model="gemini-pro", prompt=prompt) # نموذج "gemini-pro" أو "gemini-1.5-flash"
+        new = resp.text.strip() # Access text from the response
         if new and new != orig:
             with open(f, "w", encoding="utf-8") as fh:
                 fh.write(new)
@@ -67,4 +71,3 @@ with open(".github/ai_report.txt", "w", encoding="utf-8") as rf:
     rf.write("\n".join(report_lines))
 
 print("AI fix completed. Report written to .github/ai_report.txt")
-          
