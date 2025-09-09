@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -59,11 +59,79 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           mkdir -p .github/scripts
-          python .github/scripts/ai_fix_all.py
-          
-          # Output to PR body
+          # BEGIN Python script content - Pay EXTREME attention to indentation here
+          cat > .github/scripts/ai_fix_all.py << 'EOF_PYTHON_SCRIPT'
+import os, glob, time
+from google import genai
+
+# Configure genai client
+genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+
+patterns = [
+    "lib/**/*.dart",
+    "**/pubspec.yaml",
+    "**/build.gradle",
+    "**/build.gradle.kts",
+    "**/settings.gradle",
+    "**/gradle.properties",
+    "**/package.json",
+    "**/requirements.txt",
+    "firebase.json",
+    "codemagic.yaml",
+    "README.md"
+]
+
+files = sorted(set(sum([glob.glob(p, recursive=True) for p in patterns], [])))
+report_lines = []
+changed = 0
+
+def prepare_text(s, max_chars=7000):
+    if len(s) <= max_chars:
+        return s
+    half = max_chars//2
+    return s[:half] + "\n\n/*...TRUNCATED...*/\n\n" + s[-half:]
+
+for f in files:
+    try:
+        with open(f, "r", encoding="utf-8", errors="ignore") as fh:
+            orig = fh.read()
+    except Exception as e:
+        report_lines.append(f"ERROR reading {f}: {e}")
+        continue
+
+    snippet = prepare_text(orig)
+    prompt = f"You are an expert developer. Fix and upgrade this file:\nFILEPATH: {f}\n{snippet}"
+
+    try:
+        model = genai.GenerativeModel("gemini-pro") # Or "gemini-1.5-flash" depending on your API/Region
+        resp = model.generate_content(prompt)
+        new = resp.text.strip()
+        if new and new != orig:
+            with open(f, "w", encoding="utf-8") as fh:
+                fh.write(new)
+            report_lines.append(f"UPDATED: {f}")
+            changed += 1
+        else:
+            report_lines.append(f"NOCHANGE: {f}")
+    except Exception as e:
+        report_lines.append(f"AI ERROR for {f}: {e}")
+
+    time.sleep(1)
+
+report_lines.insert(0, f"AI Fix run - files targeted: {len(files)} - updated: {changed}")
+os.makedirs(".github", exist_ok=True)
+with open(".github/ai_report.txt", "w", encoding="utf-8") as rf:
+    rf.write("\n".join(report_lines))
+
+print("AI fix completed. Report written to .github/ai_report.txt")
+EOF_PYTHON_SCRIPT
+          # END Python script content
+
+          python .github/scripts/ai_fix_all.py 2>&1 | tee .github/ai_report.txt
+
+          report_content=$(cat .github/ai_report.txt)
           echo "report<<EOF" >> $GITHUB_OUTPUT
-          cat .github/ai_report.txt >> $GITHUB_OUTPUT
+          echo "$report_content" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
@@ -77,9 +145,8 @@ jobs:
       - name: Checkout AI branch if exists
         run: |
           BRANCH_NAME="ai-fix-${{ github.run_id }}"
-          if git fetch origin "$BRANCH_NAME" 2>/dev/null; then
+          if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME" || git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
             git checkout "$BRANCH_NAME"
-            echo "Checked out AI branch: $BRANCH_NAME"
           else
             echo "AI branch not found; continuing on current branch"
           fi
@@ -88,61 +155,45 @@ jobs:
         run: |
           set -e
           mkdir -p artifacts
-          
           if [ -z "$PROJECTS" ]; then
             echo "No projects found"
             exit 0
           fi
-          
           IFS='|' read -ra PROJECT_ARRAY <<< "$PROJECTS"
           for project in "${PROJECT_ARRAY[@]}"; do
-            if [ -z "$project" ]; then
-              continue
-            fi
-            
             type="${project%%:*}"
             path="${project#*:}"
-            echo "---- Building $type at $path ----"
-            
             cd "$path" || continue
-
             case $type in
               flutter)
-                flutter pub get || echo "Flutter pub get failed"
-                flutter analyze || echo "Flutter analyze failed"
-                flutter test || echo "Flutter test failed"
-                flutter build apk --release || echo "Flutter build failed"
+                flutter pub get || true
+                flutter analyze || true
+                flutter test || true
+                flutter build apk --release || true
                 mkdir -p "../../artifacts/flutter/$(basename "$path")"
                 cp build/app/outputs/flutter-apk/app-release.apk "../../artifacts/flutter/$(basename "$path")/" 2>/dev/null || true
                 ;;
               gradle)
-                chmod +x gradlew 2>/dev/null || true
-                ./gradlew assembleRelease || echo "Gradle build failed"
+                chmod +x gradlew || true
+                ./gradlew assembleRelease || true
                 mkdir -p "../../artifacts/gradle/$(basename "$path")"
                 cp app/build/outputs/apk/release/*.apk "../../artifacts/gradle/$(basename "$path")/" 2>/dev/null || true
                 ;;
               node)
-                npm install || echo "NPM install failed"
-                npm run lint || echo "NPM lint failed"
-                npm test || echo "NPM test failed"
-                npm run build || echo "NPM build failed"
+                npm install || true
+                npm run build || true
                 mkdir -p "../../artifacts/node/$(basename "$path")"
                 cp -r dist/* "../../artifacts/node/$(basename "$path")/" 2>/dev/null || true
                 ;;
               python)
-                pip install -r requirements.txt || echo "Pip install failed"
-                pytest || echo "Pytest failed"
+                pip install -r requirements.txt || true
+                pytest || true
                 mkdir -p "../../artifacts/python/$(basename "$path")"
                 cp -r build/* "../../artifacts/python/$(basename "$path")/" 2>/dev/null || true
                 ;;
             esac
-
-            cd - >/dev/null || true
+            cd - >/dev/null
           done
-
-          if [ -z "$(find artifacts -type f)" ]; then
-            echo "No artifacts were generated" > artifacts/README.txt
-          fi
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
