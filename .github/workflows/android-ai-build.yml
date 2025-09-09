@@ -24,7 +24,7 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y jq
           python -m pip install --upgrade pip
-          pip install google-generativeai
+          pip install google-genai
 
       - name: Find projects
         id: find-projects
@@ -59,45 +59,11 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           mkdir -p .github/scripts
-          # Create default AI script if not exists
-          if [ ! -f .github/scripts/ai_fix_all.py ]; then
-            cat > .github/scripts/ai_fix_all.py << 'EOF'
-import os
-# استيراد المكتبة الجديدة
-from google import genai
-
-# تهيئة العميل
-client = genai.Client(api_key="YOUR_API_KEY")  # استبدل YOUR_API_KEY بمفتاحك
-
-# إجراء طلب
-response = client.models.generate_content(
-    model="gemini-2.0-flash",  # يمكنك تغيير النموذج
-    contents="Explain how AI works in a few words"
-)
-print(response.text)
-
-genai.configure(api_key=os.environ['GEMINI_API_KEY'])
-model = genai.GenerativeModel('gemini-pro')
-
-def analyze_code(file_path):
-    try:
-        with open(file_path, 'r') as f:
-            content = f.read()
-        response = model.generate_content(f"Review this code for errors and suggest fixes:\n{content}")
-        return response.text
-    except Exception as e:
-        return f"Error analyzing {file_path}: {str(e)}"
-
-print("AI code analysis completed")
-EOF
-          fi
+          python .github/scripts/ai_fix_all.py
           
-          python .github/scripts/ai_fix_all.py 2>&1 | tee .github/ai_report.txt
-          
-          # Create output for PR description
-          report_content=$(cat .github/ai_report.txt)
+          # Output to PR body
           echo "report<<EOF" >> $GITHUB_OUTPUT
-          echo "$report_content" >> $GITHUB_OUTPUT
+          cat .github/ai_report.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
@@ -174,7 +140,6 @@ EOF
             cd - >/dev/null || true
           done
 
-          # Create a placeholder file if no artifacts were created
           if [ -z "$(find artifacts -type f)" ]; then
             echo "No artifacts were generated" > artifacts/README.txt
           fi
