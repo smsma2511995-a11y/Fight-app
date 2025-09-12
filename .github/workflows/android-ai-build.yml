@@ -53,7 +53,6 @@ jobs:
           echo "PROJECTS=$projects" >> $GITHUB_ENV
           echo "Found projects: $projects"
 
-      
       - name: Run AI auto-fixer
         id: ai-fix
         env:
@@ -64,15 +63,9 @@ jobs:
 
           report_content=$(cat .github/ai_report.txt)
 
-          # إنشاء ملف تقرير داخل .github/
+          # تقرير داخل .github
           echo "$report_content" > .github/ai_changes_report.md
 
-          echo "report<<EOF" >> $GITHUB_OUTPUT
-          echo "$report_content" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT 
-          mkdir -p .github/scripts
-          python .github/scripts/ai_fix_all.py 2>&1 | tee .github/ai_report.txt
-          report_content=$(cat .github/ai_report.txt)
           echo "report<<EOF" >> $GITHUB_OUTPUT
           echo "$report_content" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -107,6 +100,7 @@ jobs:
           for project in "${PROJECT_ARRAY[@]}"; do
             type="${project%%:*}"
             path="${project#*:}"
+            echo ">>> Building $type project at $path"
             cd "$path" || continue
             case $type in
               flutter)
@@ -150,6 +144,7 @@ jobs:
         run: |
           mkdir -p artifacts/apk
           cp build/app/outputs/flutter-apk/app-release.apk artifacts/apk/ 2>/dev/null || true
+          cp android/app/build/outputs/apk/release/*.apk artifacts/apk/ 2>/dev/null || true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
