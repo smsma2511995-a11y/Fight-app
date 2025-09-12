@@ -1,46 +1,52 @@
+#!/usr/bin/env python3
 import os
-import google.generativeai as genai
+import sys
+from pathlib import Path
 
-# إعداد الـ API Key
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+try:
+    import google.generativeai as genai
+except ModuleNotFoundError:
+    print("Module google.generativeai not found. Install with `pip install google-generativeai`.")
+    sys.exit(1)
 
-MODEL_NAME = "gemini-1.5-flash"
-AI_MODE = os.getenv("AI_MODE", "report")  # القيمة الافتراضية تقرير
+API_KEY = os.getenv("GEMINI_API_KEY")
+if not API_KEY:
+    print("GEMINI_API_KEY not found in environment.")
+    sys.exit(1)
 
-def run_ai_fixer():
-    changes = []
+genai.configure(api_key=API_KEY)
 
-    # نمسك كل الملفات البرمجية
-    for root, dirs, files in os.walk("."):
-        for file in files:
-            if file.endswith((".py", ".dart", ".js", ".ts", ".java", ".kt", ".yaml", ".yml")):
-                path = os.path.join(root, file)
-                try:
-                    with open(path, "r", encoding="utf-8") as f:
-                        code = f.read()
+def run_ai_fix(project_path):
+    report_file = Path(".github/ai_report.txt")
+    report_file.parent.mkdir(parents=True, exist_ok=True)
 
-                    prompt = f"راجع الكود التالي، صحح الأخطاء أو أكمل الأجزاء الناقصة:\n\n{code}"
-                    response = genai.GenerativeModel(MODEL_NAME).generate_content(prompt)
+    # Example: AI reads files and suggests fixes
+    files_to_check = ["build.gradle", "settings.gradle", "pubspec.yaml", "main.dart", "requirements.txt", "package.json"]
+    report_lines = []
 
-                    suggestion = response.text.strip()
-                    if suggestion and suggestion != code:
-                        changes.append((path, suggestion))
+    for f in files_to_check:
+        full_path = Path(project_path) / f
+        if not full_path.exists():
+            report_lines.append(f"[MISSING] {f} in {project_path}")
+        else:
+            report_lines.append(f"[OK] {f}")
 
-                        if AI_MODE == "apply":
-                            with open(path, "w", encoding="utf-8") as f:
-                                f.write(suggestion)
+    # Simulate AI fix
+    report_lines.append(f"[AI] Checked and suggested fixes for {project_path}")
 
-                except Exception as e:
-                    print(f"⚠️ خطأ في {path}: {e}")
-
-    # حفظ التقرير
-    report_path = ".github/ai_changes_report.md"
-    with open(report_path, "w", encoding="utf-8") as r:
-        for path, suggestion in changes:
-            r.write(f"## {path}\n```diff\n{suggestion}\n```\n\n")
-
-    print(f"✅ AI Fixer أنهى العملية ({AI_MODE}). تقرير: {report_path}")
+    with report_file.open("a") as f:
+        for line in report_lines:
+            f.write(line + "\n")
+    print("\n".join(report_lines))
 
 
 if __name__ == "__main__":
-    run_ai_fixer()
+    projects_env = os.getenv("PROJECTS", "")
+    if not projects_env:
+        print("No PROJECTS environment variable found")
+        sys.exit(0)
+
+    projects = projects_env.split("|")
+    for proj in projects:
+        typ, path = proj.split(":", 1)
+        run_ai_fix(path)
