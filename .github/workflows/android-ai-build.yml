@@ -53,7 +53,7 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          python scripts/ai_fix.py
+          python .github/scripts/ai_fix_all.py 2>&1 | tee .github/ai_report.txt
           cat .github/ai_report.txt
           echo "report<<EOF" >> $GITHUB_OUTPUT
           cat .github/ai_report.txt >> $GITHUB_OUTPUT
