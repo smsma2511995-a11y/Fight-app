@@ -58,9 +58,6 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          # هذه هي الكتلة الجديدة المعدلة!
-          # لا يوجد كود بايثون هنا مباشرةً بعد الآن.
-          # فقط أمر Bash لتشغيل ملف ai_fix_all.py
           mkdir -p .github/scripts
           python .github/scripts/ai_fix_all.py 2>&1 | tee .github/ai_report.txt
 
@@ -69,17 +66,18 @@ jobs:
           echo "$report_content" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Create Pull Request
+      - name: Create Pull Request for AI Fixes
         uses: peter-evans/create-pull-request@v6
         with:
-          branch: ai-fix-${{ github.run_id }}
+          token: ${{ secrets.MY_GITHUB_API_KEY }}
+          branch: ai-fix-${{ github.run_number }}-${{ github.run_id }}
           title: "🤖 AI suggested fixes"
           commit-message: "🤖 AI applied automatic fixes"
           body: ${{ steps.ai-fix.outputs.report }}
 
       - name: Checkout AI branch if exists
         run: |
-          BRANCH_NAME="ai-fix-${{ github.run_id }}"
+          BRANCH_NAME="ai-fix-${{ github.run_number }}-${{ github.run_id }}"
           if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME" || git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
             git checkout "$BRANCH_NAME"
           else
@@ -136,21 +134,14 @@ jobs:
           name: build-artifacts
           path: artifacts/
           if-no-files-found: ignore
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
-        with:
-          # هذا السطر الإضافي يمنح صلاحيات كافية للتوكن لإنشاء PRs
-          token: ${{ secrets.MY_GITHUB_API_KEY }}
-          branch: ai-fix-${{ github.run_number }}-${{ github.run_id }}
-          title: "🤖 AI suggested fixes"
-          commit-message: "🤖 AI applied automatic fixes"
-          body: ${{ steps.ai-fix.outputs.report }}
+
       - name: Copy APK to artifacts
         run: |
-         mkdir -p artifacts/apk
-         cp build/app/outputs/flutter-apk/app-release.apk artifacts/apk/ 2>/dev/null || true
+          mkdir -p artifacts/apk
+          cp build/app/outputs/flutter-apk/app-release.apk artifacts/apk/ 2>/dev/null || true
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-            name: APK
-            path: artifacts/apk/
+          name: APK
+          path: artifacts/apk/
