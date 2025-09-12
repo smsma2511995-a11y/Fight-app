@@ -1,0 +1,14 @@
+[MISSING] build.gradle in .
+[MISSING] settings.gradle in .
+[OK] pubspec.yaml
+[MISSING] main.dart in .
+[MISSING] requirements.txt in .
+[MISSING] package.json in .
+[AI] Checked and suggested fixes for .
+[OK] build.gradle
+[MISSING] settings.gradle in ./android/app
+[MISSING] pubspec.yaml in ./android/app
+[MISSING] main.dart in ./android/app
+[MISSING] requirements.txt in ./android/app
+[MISSING] package.json in ./android/app
+[AI] Checked and suggested fixes for ./android/app
