@@ -53,6 +53,7 @@ jobs:
           echo "PROJECTS=$projects" >> $GITHUB_ENV
           echo "Found projects: $projects"
 
+      
       - name: Run AI auto-fixer
         id: ai-fix
         env:
@@ -61,6 +62,16 @@ jobs:
           mkdir -p .github/scripts
           python .github/scripts/ai_fix_all.py 2>&1 | tee .github/ai_report.txt
 
+          report_content=$(cat .github/ai_report.txt)
+
+          # إنشاء ملف تقرير داخل .github/
+          echo "$report_content" > .github/ai_changes_report.md
+
+          echo "report<<EOF" >> $GITHUB_OUTPUT
+          echo "$report_content" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT 
+          mkdir -p .github/scripts
+          python .github/scripts/ai_fix_all.py 2>&1 | tee .github/ai_report.txt
           report_content=$(cat .github/ai_report.txt)
           echo "report<<EOF" >> $GITHUB_OUTPUT
           echo "$report_content" >> $GITHUB_OUTPUT
