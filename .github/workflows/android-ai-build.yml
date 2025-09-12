@@ -1,19 +1,10 @@
-name: Auto Build, AI-Fix & Multi Project Build
+name: Auto Build & AI-Fix
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
   workflow_dispatch:
-    inputs:
-      ai_mode:
-        description: "اختر وضع الذكاء الاصطناعي"
-        required: true
-        default: "report"
-        type: choice
-        options:
-          - report
-          - apply
 
 permissions:
   contents: write
@@ -31,37 +22,9 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y jq
+          sudo apt-get install -y jq openjdk-17-jdk
           python -m pip install --upgrade pip
-          pip install google-genai
-
-      - name: Run AI auto-fixer
-        id: ai-fix
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          AI_MODE: ${{ github.event.inputs.ai_mode }}
-        run: |
-          mkdir -p .github/scripts
-          python .github/scripts/ai_fix_all.py 2>&1 | tee .github/ai_report.txt
-
-          report_content=$(cat .github/ai_report.txt)
-
-          # تقرير محفوظ
-          echo "$report_content" > .github/ai_changes_report.md
-
-          echo "report<<EOF" >> $GITHUB_OUTPUT
-          echo "$report_content" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Create Pull Request for AI Fixes
-        if: ${{ github.event.inputs.ai_mode == 'apply' }}
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.MY_GITHUB_API_KEY }}
-          branch: ai-fix-${{ github.run_number }}-${{ github.run_id }}
-          title: "🤖 AI suggested fixes"
-          commit-message: "🤖 AI applied automatic fixes"
-          body: ${{ steps.ai-fix.outputs.report }}
+          pip install google-generativeai
 
       - name: Find projects
         id: find-projects
@@ -81,19 +44,40 @@ jobs:
           for f in $(find . -name "requirements.txt"); do
             projects="$projects|python:$(dirname "$f")"
           done
-
           projects=${projects#|}
           echo "PROJECTS=$projects" >> $GITHUB_ENV
           echo "Found projects: $projects"
+
+      - name: Run AI auto-fixer
+        id: ai-fix
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python scripts/ai_fix.py
+          cat .github/ai_report.txt
+          echo "report<<EOF" >> $GITHUB_OUTPUT
+          cat .github/ai_report.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request for AI Fixes
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.MY_GITHUB_API_KEY }}
+          branch: ai-fix-${{ github.run_number }}-${{ github.run_id }}
+          title: "🤖 AI suggested fixes"
+          commit-message: "🤖 AI applied automatic fixes"
+          body: ${{ steps.ai-fix.outputs.report }}
+
+      - name: Checkout AI branch if exists
+        run: |
+          BRANCH_NAME="ai-fix-${{ github.run_number }}-${{ github.run_id }}"
+          git fetch origin $BRANCH_NAME || true
+          git checkout -B $BRANCH_NAME origin/$BRANCH_NAME || echo "Continuing on current branch"
 
       - name: Build projects
         run: |
           set -e
           mkdir -p artifacts
-          if [ -z "$PROJECTS" ]; then
-            echo "No projects found"
-            exit 0
-          fi
           IFS='|' read -ra PROJECT_ARRAY <<< "$PROJECTS"
           for project in "${PROJECT_ARRAY[@]}"; do
             type="${project%%:*}"
@@ -136,14 +120,3 @@ jobs:
           name: build-artifacts
           path: artifacts/
           if-no-files-found: ignore
-
-      - name: Copy APK to artifacts
-        run: |
-          mkdir -p artifacts/apk
-          cp build/app/outputs/flutter-apk/app-release.apk artifacts/apk/ 2>/dev/null || true
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: APK
-          path: artifacts/apk/
