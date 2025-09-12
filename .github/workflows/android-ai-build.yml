@@ -64,6 +64,7 @@ jobs:
         with:
           token: ${{ secrets.MY_GITHUB_API_KEY }}
           branch: ai-fix-${{ github.run_number }}-${{ github.run_id }}
+          base: main
           title: "🤖 AI suggested fixes"
           commit-message: "🤖 AI applied automatic fixes"
           body: ${{ steps.ai-fix.outputs.report }}
